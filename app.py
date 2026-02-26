@@ -178,6 +178,19 @@ def logout():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+    # ---------------- NOTES GENERATOR ----------------
+@app.route("/notes", methods=["GET", "POST"])
+def notes():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    summary = ""
+    if request.method == "POST":
+        content = request.form.get("content")
+        summary = f"Summary: {content[:100]}..."
+
+    return render_template("notes.html", summary=summary)
+
 
 
 
