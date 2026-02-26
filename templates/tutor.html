@@ -1,21 +1,75 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>AI Tutor</title>
+<title>ScholarAI - AI Tutor</title>
 <link rel="stylesheet" href="/static/style.css">
+<style>
+.chat-container {
+    max-width:700px;
+    margin:30px auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+
+.chat-box {
+    height:400px;
+    overflow-y:auto;
+    border:1px solid #eee;
+    padding:15px;
+    margin-bottom:15px;
+    border-radius:8px;
+    background:#f9fafc;
+}
+
+.user-msg {
+    text-align:right;
+    margin:10px 0;
+}
+
+.ai-msg {
+    text-align:left;
+    margin:10px 0;
+    color:#4a90e2;
+}
+
+input {
+    width:80%;
+    padding:10px;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+button {
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    background:#4a90e2;
+    color:white;
+}
+</style>
 </head>
 <body>
 
-<h2>AI Smart Tutor</h2>
+<div class="chat-container">
+    <h2>🤖 ScholarAI Tutor</h2>
 
-<form method="POST">
-<input name="question" placeholder="Ask your doubt..." required>
-<button type="submit">Ask</button>
-</form>
+    <div class="chat-box">
+        {% if response %}
+            <div class="user-msg">You: {{ request.form.question }}</div>
+            <div class="ai-msg">AI: {{ response }}</div>
+        {% endif %}
+    </div>
 
-<p>{{ response }}</p>
+    <form method="POST">
+        <input name="question" placeholder="Ask your doubt..." required>
+        <button type="submit">Send</button>
+    </form>
 
-<a href="/dashboard">Back</a>
+    <br>
+    <a href="/dashboard">⬅ Back to Dashboard</a>
+</div>
 
 </body>
 </html>
