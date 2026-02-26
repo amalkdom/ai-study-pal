@@ -3,51 +3,154 @@
 <head>
 <title>ScholarAI Dashboard</title>
 <link rel="stylesheet" href="/static/style.css">
+
+<style>
+body {
+    margin:0;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.top-bar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.toggle-btn {
+    padding:8px 12px;
+    border:none;
+    border-radius:6px;
+    background:#4a90e2;
+    color:white;
+    cursor:pointer;
+}
+
+.main {
+    padding:30px;
+}
+
+.cards {
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    margin-bottom:40px;
+}
+
+.card {
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    width:220px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+}
+
+canvas {
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+}
+</style>
 </head>
+
 <body>
 
-<div class="sidebar">
-    <h2>ScholarAI</h2>
-    <a href="/dashboard">Dashboard</a>
-    <a href="/tutor">AI Tutor</a>
-    <a href="/planner">Study Planner</a>
-    <a href="/quiz">Mock Test</a>
-    <a href="/logout">Logout</a>
-</div>
+<div style="display:flex;">
 
-<div class="main">
-    <button onclick="toggleMode()">Toggle Dark Mode</button>
-    <h1>Welcome, {{ user }} 👋</h1>
-
-   <div class="card">
-    <h3>🏆 Badge</h3>
-    <p>
-        {% if stats.xp >= 50 %}
-            Scholar Badge
-        {% else %}
-            Keep Learning!
-        {% endif %}
-    </p>
-</div>
-
-        <div class="card">
-            <h3>📊 Performance</h3>
-            <p>78% Accuracy</p>
-        </div>
-
-        <div class="card">
-            <h3>⏱ Focus Mode</h3>
-            <button onclick="startTimer()">Start 25 Min</button>
-        </div>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>ScholarAI</h2>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/tutor">AI Tutor</a>
+        <a href="/planner">Study Planner</a>
+        <a href="/quiz">Mock Test</a>
+        <a href="/notes">Notes Generator</a>
+        <a href="/logout">Logout</a>
     </div>
 
-    <p id="timer"></p>
+    <!-- Main Content -->
+    <div class="main">
+
+        <div class="top-bar">
+            <h1>Welcome, {{ user }} 👋</h1>
+            <button class="toggle-btn" onclick="toggleMode()">Dark / Light</button>
+        </div>
+
+        <!-- Cards -->
+        <div class="cards">
+
+            <div class="card">
+                <h3>🔥 XP</h3>
+                <p>{{ stats.xp }}</p>
+            </div>
+
+            <div class="card">
+                <h3>🎯 Score</h3>
+                <p>{{ stats.score }}</p>
+            </div>
+
+            <div class="card">
+                <h3>🏆 Badge</h3>
+                <p>
+                    {% if stats.xp >= 50 %}
+                        Scholar Badge
+                    {% else %}
+                        Keep Learning!
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="card">
+                <h3>📉 Weak Area</h3>
+                <p>{{ weak_area }}</p>
+            </div>
+
+            <div class="card">
+                <h3>⏱ Focus Mode</h3>
+                <button onclick="startTimer()">Start 25 Min</button>
+                <p id="timer"></p>
+            </div>
+
+        </div>
+
+        <!-- Performance Chart -->
+        <h2>📊 Performance Analytics</h2>
+        <canvas id="performanceChart" width="600" height="300"></canvas>
+
+    </div>
 
 </div>
 
-<canvas id="performanceChart" width="400" height="200"></canvas>
+<!-- Focus Timer Script -->
+<script>
+function startTimer(){
+    let time = 25 * 60;
+    let timerDisplay = document.getElementById("timer");
 
+    let interval = setInterval(function(){
+        let minutes = Math.floor(time/60);
+        let seconds = time%60;
+        timerDisplay.innerHTML = minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        time--;
+        if(time < 0){
+            clearInterval(interval);
+            timerDisplay.innerHTML = "Time's up! Take a break!";
+        }
+    },1000);
+}
+</script>
+
+<!-- Dark Mode Script -->
+<script>
+function toggleMode(){
+    document.body.classList.toggle("dark-mode");
+}
+</script>
+
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 var ctx = document.getElementById('performanceChart').getContext('2d');
 var chart = new Chart(ctx, {
@@ -58,32 +161,11 @@ var chart = new Chart(ctx, {
             label: 'Performance %',
             data: [60,75,80,90],
             borderColor: '#4a90e2',
+            tension: 0.3,
             fill:false
         }]
     }
 });
-</script>
-
-<script>
-function startTimer(){
-    let time = 25 * 60;
-    let timerDisplay = document.getElementById("timer");
-
-    let interval = setInterval(function(){
-        let minutes = Math.floor(time/60);
-        let seconds = time%60;
-        timerDisplay.innerHTML = "Focus Time: " + minutes + ":" + seconds;
-        time--;
-        if(time < 0){
-            clearInterval(interval);
-            timerDisplay.innerHTML = "Time's up! Take a short break!";
-        }
-    },1000);
-}
-<script>
-function toggleMode(){
-    document.body.classList.toggle("dark-mode");
-}
 </script>
 
 </body>
