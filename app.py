@@ -49,9 +49,14 @@ def dashboard():
     username = session["user"]
     stats = user_stats.get(username, {"xp": 0, "score": 0})
 
+    weak_area = "Advanced Concepts"
+    if stats["score"] > 3:
+        weak_area = "Strong Performance"
+
     return render_template("dashboard.html",
                            user=username,
-                           stats=stats)
+                           stats=stats,
+                           weak_area=weak_area)
 
 
 # ---------------- SMART TUTOR ----------------
@@ -195,6 +200,7 @@ def notes():
         summary = f"Summary: {content[:100]}..."
 
     return render_template("notes.html", summary=summary)
+
 
 
 
