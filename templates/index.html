@@ -5,45 +5,102 @@
     <style>
         body {
             margin: 0;
-            font-family: Arial;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #4a90e2;
+            padding: 15px;
             color: white;
             text-align: center;
+            font-size: 20px;
+            font-weight: bold;
         }
-        .container {
-            margin-top: 150px;
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(to right, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            padding: 100px 20px;
         }
+
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            font-size: 20px;
+        }
+
+        /* Form Section */
+        .form-box {
+            background: white;
+            width: 400px;
+            margin: -50px auto 50px auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
         input {
-            padding: 12px;
-            margin: 10px;
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
             border-radius: 8px;
-            border: none;
-            width: 250px;
+            border: 1px solid #ccc;
         }
+
         button {
-            padding: 12px 25px;
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
-            background: #ff9800;
+            background: #4a90e2;
             color: white;
             font-weight: bold;
             cursor: pointer;
         }
+
         button:hover {
-            background: #e68900;
+            background: #357abd;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #222;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📚 AI Study Pal</h1>
-        <p>Your Smart Study Companion</p>
 
-        <form method="POST">
-            <input type="text" name="subject" placeholder="Enter Subject" required><br>
-            <input type="number" name="hours" placeholder="Study Hours" required><br>
-            <button type="submit">Generate Study Plan</button>
-        </form>
-    </div>
+<div class="navbar">
+    📚 AI Study Pal
+</div>
+
+<div class="hero">
+    <h1>Your Smart Study Companion</h1>
+    <p>Helping School, UG & PG Students Study Smarter</p>
+</div>
+
+<div class="form-box">
+    <h2>Generate Your Study Plan</h2>
+    <form method="POST">
+        <input type="text" name="subject" placeholder="Enter Subject" required><br>
+        <input type="number" name="hours" placeholder="Study Hours" required><br>
+        <button type="submit">Generate Plan</button>
+    </form>
+</div>
+
+<div class="footer">
+    © 2026 AI Study Pal | Capstone Project
+</div>
+
 </body>
 </html>
