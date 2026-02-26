@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Study Results</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            margin: 30px auto;
+            padding: 20px;
+            width: 70%;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 { color: #4a90e2; }
+        a {
+            text-decoration: none;
+            color: #4a90e2;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>📘 Study Plan for {{ subject }}</h1>
+
+<div class="card">
+<h2>🗓 Study Schedule</h2>
+{% for item in plan %}
+<p>{{ item }}</p>
+{% endfor %}
+</div>
+
+<div class="card">
+<h2>❓ Quiz</h2>
+{% for q in quiz %}
+<p>{{ q }}</p>
+{% endfor %}
+</div>
+
+<br>
+<a href="/">⬅ Back to Home</a>
+
+</body>
+</html>
