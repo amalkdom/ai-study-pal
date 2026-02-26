@@ -6,6 +6,7 @@ app.secret_key = "scholarai_secret_key"
 
 # Temporary in-memory user storage (Demo only)
 users = {}
+user_stats = {}
 
 # ---------------- LOGIN ----------------
 @app.route("/", methods=["GET", "POST"])
@@ -84,20 +85,52 @@ def planner():
 
 
 # ---------------- QUIZ ----------------
-@app.route("/quiz")
+# ---------------- ADVANCED QUIZ SYSTEM ----------------
+@app.route("/quiz", methods=["GET", "POST"])
 def quiz():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    questions = [
-        "What is Newton's First Law?",
-        "Explain Photosynthesis.",
-        "Define Artificial Intelligence.",
-        "What is a derivative in calculus?",
-        "What is Object-Oriented Programming?"
-    ]
+    username = session["user"]
 
-    return render_template("quiz.html", questions=random.sample(questions, 3))
+    if username not in user_stats:
+        user_stats[username] = {"xp": 0, "score": 0}
+
+    questions = []
+    result = ""
+    module = ""
+    level = ""
+
+    if request.method == "POST":
+        module = request.form.get("module")
+        level = request.form.get("level")
+        answer = request.form.get("answer")
+
+        if level == "easy":
+            questions = [
+                {"q": f"What is {module}?", "options": ["Basic Concept", "Advanced Theory", "Unrelated Topic"], "correct": "Basic Concept"}
+            ]
+        elif level == "medium":
+            questions = [
+                {"q": f"Explain core idea of {module}", "options": ["Key Principle", "Random Guess", "Wrong Idea"], "correct": "Key Principle"}
+            ]
+        elif level == "hard":
+            questions = [
+                {"q": f"Advanced application of {module}?", "options": ["Complex Analysis", "Simple Definition", "Irrelevant"], "correct": "Complex Analysis"}
+            ]
+
+        if answer:
+            if answer == questions[0]["correct"]:
+                result = "✅ Correct!"
+                user_stats[username]["xp"] += 10
+                user_stats[username]["score"] += 1
+            else:
+                result = "❌ Wrong! Review concept."
+
+    return render_template("quiz.html",
+                           questions=questions,
+                           result=result,
+                           stats=user_stats[username])
 # ---------------- QUIZ WITH LEVELS ----------------
 @app.route("/quiz", methods=["GET", "POST"])
 def quiz():
@@ -145,5 +178,6 @@ def logout():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
 
