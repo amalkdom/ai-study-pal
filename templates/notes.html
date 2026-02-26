@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ScholarAI - Notes Generator</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<h2>📄 AI Notes Generator</h2>
+
+<form method="POST">
+<textarea name="content" rows="6" cols="60" placeholder="Paste notes here..."></textarea><br>
+<button type="submit">Generate Summary</button>
+</form>
+
+{% if summary %}
+<p>{{ summary }}</p>
+{% endif %}
+
+<a href="/dashboard">⬅ Back</a>
+
+</body>
+</html>
