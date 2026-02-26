@@ -1,73 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ScholarAI - Adaptive Quiz</title>
+<title>ScholarAI - Advanced Quiz</title>
 <link rel="stylesheet" href="/static/style.css">
-<style>
-.quiz-container {
-    max-width:800px;
-    margin:40px auto;
-    background:white;
-    padding:30px;
-    border-radius:12px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.1);
-}
-
-select, input {
-    width:90%;
-    padding:10px;
-    margin:10px 0;
-    border-radius:8px;
-    border:1px solid #ccc;
-}
-
-button {
-    padding:10px 20px;
-    border:none;
-    border-radius:8px;
-    background:#4a90e2;
-    color:white;
-    font-weight:bold;
-}
-
-.question-box {
-    margin-top:20px;
-    padding:15px;
-    background:#f9fafc;
-    border-radius:8px;
-}
-</style>
 </head>
 <body>
 
 <div class="quiz-container">
-    <h2>📝 Adaptive Quiz Generator</h2>
+    <h2>📝 Adaptive Quiz</h2>
 
     <form method="POST">
-        <input name="module" placeholder="Enter Topic (e.g., Calculus, OOP, Photosynthesis)" required>
-
+        <input name="module" placeholder="Enter Topic" required>
         <select name="level" required>
             <option value="">Select Difficulty</option>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
         </select>
-
-        <button type="submit">Generate Quiz</button>
+        <button type="submit">Generate</button>
     </form>
 
     {% if questions %}
-        <h3>Level: {{ level|capitalize }} | Topic: {{ module }}</h3>
+        <h3>{{ questions[0].q }}</h3>
 
-        {% for q in questions %}
-            <div class="question-box">
-                <p>{{ q }}</p>
-            </div>
-        {% endfor %}
+        <form method="POST">
+            {% for option in questions[0].options %}
+                <input type="radio" name="answer" value="{{ option }}" required> {{ option }}<br>
+            {% endfor %}
+            <input type="hidden" name="module" value="{{ request.form.module }}">
+            <input type="hidden" name="level" value="{{ request.form.level }}">
+            <br>
+            <button type="submit">Submit Answer</button>
+        </form>
     {% endif %}
 
+    {% if result %}
+        <h3>{{ result }}</h3>
+    {% endif %}
+
+    <h4>XP: {{ stats.xp }} | Score: {{ stats.score }}</h4>
+
     <br>
-    <a href="/dashboard">⬅ Back to Dashboard</a>
+    <a href="/dashboard">⬅ Back</a>
 </div>
 
 </body>
