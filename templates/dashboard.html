@@ -18,11 +18,16 @@
 <div class="main">
     <h1>Welcome, {{ user }} 👋</h1>
 
-    <div class="cards">
-        <div class="card">
-            <h3>🔥 Current Streak</h3>
-            <p>5 Days</p>
-        </div>
+   <div class="card">
+    <h3>🏆 Badge</h3>
+    <p>
+        {% if stats.xp >= 50 %}
+            Scholar Badge
+        {% else %}
+            Keep Learning!
+        {% endif %}
+    </p>
+</div>
 
         <div class="card">
             <h3>📊 Performance</h3>
