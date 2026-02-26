@@ -82,18 +82,18 @@ canvas {
 
             <div class="card">
                 <h3>🔥 XP</h3>
-                <p>{{ stats.xp }}</p>
+                <p>{{ stats.xp if stats else 0 }}</p>
             </div>
 
             <div class="card">
                 <h3>🎯 Score</h3>
-                <p>{{ stats.score }}</p>
+                <p>{{ stats.score if stats else 0 }}</p>
             </div>
 
             <div class="card">
                 <h3>🏆 Badge</h3>
                 <p>
-                    {% if stats.xp >= 50 %}
+                    {% if stats and stats.xp >= 50 %}
                         Scholar Badge
                     {% else %}
                         Keep Learning!
@@ -103,7 +103,7 @@ canvas {
 
             <div class="card">
                 <h3>📉 Weak Area</h3>
-                <p>{{ weak_area }}</p>
+                <p>{{ weak_area if weak_area else "N/A" }}</p>
             </div>
 
             <div class="card">
