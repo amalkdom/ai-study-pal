@@ -98,7 +98,43 @@ def quiz():
     ]
 
     return render_template("quiz.html", questions=random.sample(questions, 3))
+# ---------------- QUIZ WITH LEVELS ----------------
+@app.route("/quiz", methods=["GET", "POST"])
+def quiz():
+    if "user" not in session:
+        return redirect(url_for("login"))
 
+    questions = []
+    level = ""
+    module = ""
+
+    if request.method == "POST":
+        level = request.form.get("level")
+        module = request.form.get("module")
+
+        if level == "easy":
+            questions = [
+                f"What is the basic concept of {module}?",
+                f"Define {module}.",
+                f"List one example of {module}."
+            ]
+        elif level == "medium":
+            questions = [
+                f"Explain how {module} works.",
+                f"Describe key components of {module}.",
+                f"Why is {module} important?"
+            ]
+        elif level == "hard":
+            questions = [
+                f"Analyze advanced applications of {module}.",
+                f"Compare different approaches in {module}.",
+                f"Solve a complex problem related to {module}."
+            ]
+
+    return render_template("quiz.html",
+                           questions=questions,
+                           level=level,
+                           module=module)
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -109,4 +145,5 @@ def logout():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
