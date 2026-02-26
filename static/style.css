@@ -41,3 +41,16 @@ body {
     width:200px;
     box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
+.dark-mode {
+    background-color:#1e1e2f !important;
+    color:white !important;
+}
+
+.dark-mode .card {
+    background:#2c2c3e !important;
+    color:white !important;
+}
+
+.dark-mode .sidebar {
+    background:#111 !important;
+}
