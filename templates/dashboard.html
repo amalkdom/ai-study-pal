@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ScholarAI Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>ScholarAI</h2>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/tutor">AI Tutor</a>
+    <a href="/planner">Study Planner</a>
+    <a href="/quiz">Mock Test</a>
+    <a href="/logout">Logout</a>
+</div>
+
+<div class="main">
+    <h1>Welcome, {{ user }} 👋</h1>
+
+    <div class="cards">
+        <div class="card">
+            <h3>🔥 Current Streak</h3>
+            <p>5 Days</p>
+        </div>
+
+        <div class="card">
+            <h3>📊 Performance</h3>
+            <p>78% Accuracy</p>
+        </div>
+
+        <div class="card">
+            <h3>⏱ Focus Mode</h3>
+            <button onclick="startTimer()">Start 25 Min</button>
+        </div>
+    </div>
+
+    <p id="timer"></p>
+
+</div>
+
+<script>
+function startTimer(){
+    let time = 25 * 60;
+    let timerDisplay = document.getElementById("timer");
+
+    let interval = setInterval(function(){
+        let minutes = Math.floor(time/60);
+        let seconds = time%60;
+        timerDisplay.innerHTML = "Focus Time: " + minutes + ":" + seconds;
+        time--;
+        if(time < 0){
+            clearInterval(interval);
+            timerDisplay.innerHTML = "Time's up! Take a short break!";
+        }
+    },1000);
+}
+</script>
+
+</body>
+</html>
