@@ -45,6 +45,25 @@
 
 </div>
 
+<canvas id="performanceChart" width="400" height="200"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+var ctx = document.getElementById('performanceChart').getContext('2d');
+var chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Quiz 1','Quiz 2','Quiz 3','Quiz 4'],
+        datasets: [{
+            label: 'Performance %',
+            data: [60,75,80,90],
+            borderColor: '#4a90e2',
+            fill:false
+        }]
+    }
+});
+</script>
+
 <script>
 function startTimer(){
     let time = 25 * 60;
