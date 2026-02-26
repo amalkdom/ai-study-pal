@@ -1,18 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Mock Test</title>
+<title>ScholarAI - Adaptive Quiz</title>
 <link rel="stylesheet" href="/static/style.css">
+<style>
+.quiz-container {
+    max-width:800px;
+    margin:40px auto;
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+
+select, input {
+    width:90%;
+    padding:10px;
+    margin:10px 0;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+button {
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+    background:#4a90e2;
+    color:white;
+    font-weight:bold;
+}
+
+.question-box {
+    margin-top:20px;
+    padding:15px;
+    background:#f9fafc;
+    border-radius:8px;
+}
+</style>
 </head>
 <body>
 
-<h2>Mock Test</h2>
+<div class="quiz-container">
+    <h2>📝 Adaptive Quiz Generator</h2>
 
-{% for q in questions %}
-<p>{{ q }}</p>
-{% endfor %}
+    <form method="POST">
+        <input name="module" placeholder="Enter Topic (e.g., Calculus, OOP, Photosynthesis)" required>
 
-<a href="/dashboard">Back</a>
+        <select name="level" required>
+            <option value="">Select Difficulty</option>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+        </select>
+
+        <button type="submit">Generate Quiz</button>
+    </form>
+
+    {% if questions %}
+        <h3>Level: {{ level|capitalize }} | Topic: {{ module }}</h3>
+
+        {% for q in questions %}
+            <div class="question-box">
+                <p>{{ q }}</p>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <br>
+    <a href="/dashboard">⬅ Back to Dashboard</a>
+</div>
 
 </body>
 </html>
