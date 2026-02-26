@@ -46,7 +46,12 @@ def dashboard():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    return render_template("dashboard.html", user=session["user"])
+    username = session["user"]
+    stats = user_stats.get(username, {"xp": 0, "score": 0})
+
+    return render_template("dashboard.html",
+                           user=username,
+                           stats=stats)
 
 
 # ---------------- SMART TUTOR ----------------
@@ -190,6 +195,7 @@ def notes():
         summary = f"Summary: {content[:100]}..."
 
     return render_template("notes.html", summary=summary)
+
 
 
 
