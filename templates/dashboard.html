@@ -16,6 +16,7 @@
 </div>
 
 <div class="main">
+    <button onclick="toggleMode()">Toggle Dark Mode</button>
     <h1>Welcome, {{ user }} 👋</h1>
 
    <div class="card">
@@ -59,6 +60,10 @@ function startTimer(){
             timerDisplay.innerHTML = "Time's up! Take a short break!";
         }
     },1000);
+}
+<script>
+function toggleMode(){
+    document.body.classList.toggle("dark-mode");
 }
 </script>
 
