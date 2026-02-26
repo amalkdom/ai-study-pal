@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Study Planner</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<h2>Personalized Study Planner</h2>
+
+<form method="POST">
+<input name="subject" placeholder="Subject" required>
+<input name="hours" type="number" placeholder="Hours" required>
+<button type="submit">Generate</button>
+</form>
+
+{% for item in plan %}
+<p>{{ item }}</p>
+{% endfor %}
+
+<a href="/dashboard">Back</a>
+
+</body>
+</html>
