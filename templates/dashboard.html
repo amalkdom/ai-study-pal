@@ -69,6 +69,13 @@ button {
     color:white;
     cursor:pointer;
 }
+
+canvas {
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.1);
+}
 </style>
 </head>
 
@@ -83,7 +90,6 @@ button {
         <a href="/tutor">AI Tutor</a>
         <a href="/planner">Study Planner</a>
         <a href="/quiz">Mock Test</a>
-        <a href="/notes">Notes Generator</a>
         <a href="/logout">Logout</a>
     </div>
 
@@ -95,16 +101,17 @@ button {
             <button onclick="toggleMode()">Dark / Light</button>
         </div>
 
+        <!-- Cards -->
         <div class="cards">
 
             <div class="card">
                 <h3>🔥 XP</h3>
-                <p>{{ stats.get('xp', 0) }}</p>
+                <p>{{ stats.get('xp',0) }}</p>
             </div>
 
             <div class="card">
                 <h3>🎯 Score</h3>
-                <p>{{ stats.get('score', 0) }}</p>
+                <p>{{ stats.get('score',0) }}</p>
             </div>
 
             <div class="card">
@@ -113,7 +120,7 @@ button {
                     {% if stats.get('xp',0) >= 50 %}
                         Scholar Badge
                     {% else %}
-                        Keep Learning!
+                        Beginner
                     {% endif %}
                 </p>
             </div>
@@ -131,6 +138,7 @@ button {
 
         </div>
 
+        <!-- Performance Chart -->
         <h2>📊 Performance Analytics</h2>
         <canvas id="performanceChart" width="600" height="300"></canvas>
 
