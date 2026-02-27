@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Study Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>AI Study</h2>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/quiz">AI Quiz</a>
+    <a href="/chatbot">AI Chat</a>
+    <a href="/notes">Notes → Quiz</a>
+    <a href="/youtube">YT Summary</a>
+    <a href="/timer">Pomodoro</a>
+    <a href="/logout">Logout</a>
+</div>
+
+<div class="main">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
