@@ -1,12 +1,9 @@
 from flask import Flask, render_template, request, redirect, session, url_for
 import sqlite3
 import os
-import nltk
 import random
-import PyPDF2
+import nltk
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import precision_score, recall_score, f1_score
-import numpy as np
 
 app = Flask(__name__)
 app.secret_key = "scholarai_pro_secret"
@@ -14,13 +11,13 @@ app.secret_key = "scholarai_pro_secret"
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# ---------- NLTK SETUP ----------
+# -------- SAFE NLTK --------
 try:
     nltk.data.find('tokenizers/punkt')
 except:
     nltk.download('punkt')
 
-# ---------- DATABASE ----------
+# -------- DATABASE --------
 def init_db():
     conn = sqlite3.connect("scholarai.db")
     c = conn.cursor()
@@ -33,23 +30,20 @@ def init_db():
         username TEXT,
         content TEXT)""")
 
-    c.execute("""CREATE TABLE IF NOT EXISTS chat_history(
-        username TEXT,
-        message TEXT)""")
-
     c.execute("""CREATE TABLE IF NOT EXISTS quiz_attempts(
         username TEXT,
         score INTEGER,
         precision REAL,
         recall REAL,
-        f1 REAL)""")
+        f1 REAL,
+        difficulty TEXT)""")
 
     conn.commit()
     conn.close()
 
 init_db()
 
-# ---------- LOGIN ----------
+# -------- LOGIN --------
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -68,7 +62,7 @@ def login():
 
     return render_template("login.html")
 
-# ---------- REGISTER ----------
+# -------- REGISTER --------
 @app.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
@@ -85,64 +79,55 @@ def register():
 
     return render_template("register.html")
 
-# ---------- WORKSPACE ----------
+# -------- WORKSPACE --------
 @app.route("/workspace", methods=["GET","POST"])
 def workspace():
     if "user" not in session:
         return redirect("/")
 
     username = session["user"]
+
     conn = sqlite3.connect("scholarai.db")
     c = conn.cursor()
 
     summary = ""
     keywords = []
     quiz = []
-    history = []
+    result = None
+    difficulty = "medium"
 
+    # -------- UPLOAD DOCUMENT --------
     if request.method == "POST":
 
-        # File Upload
         if "file" in request.files:
             file = request.files["file"]
-            if file.filename.endswith(".pdf"):
-                path = os.path.join(UPLOAD_FOLDER,file.filename)
-                file.save(path)
-                reader = PyPDF2.PdfReader(path)
-                text = ""
-                for page in reader.pages:
-                    text += page.extract_text()
-            else:
-                text = file.read().decode("utf-8")
-
+            text = file.read().decode("utf-8")
             c.execute("DELETE FROM documents WHERE username=?",(username,))
             c.execute("INSERT INTO documents VALUES (?,?)",(username,text))
             conn.commit()
 
-        # Summary + TF-IDF
+        # -------- GENERATE SUMMARY --------
         if "generate_summary" in request.form:
             c.execute("SELECT content FROM documents WHERE username=?",(username,))
             doc = c.fetchone()
             if doc:
                 text = doc[0]
-                vectorizer = TfidfVectorizer(stop_words="english",max_features=10)
+                vectorizer = TfidfVectorizer(stop_words="english",max_features=8)
                 X = vectorizer.fit_transform([text])
                 keywords = vectorizer.get_feature_names_out()
                 summary = " ".join(text.split()[:80])
 
-        # Generate Quiz
+        # -------- GENERATE QUIZ --------
         if "generate_quiz" in request.form:
             c.execute("SELECT content FROM documents WHERE username=?",(username,))
             doc = c.fetchone()
             if doc:
                 text = doc[0]
-                words = nltk.word_tokenize(text.lower())
-                words = [w for w in words if w.isalpha()]
-                unique = list(set(words))
-                sample = random.sample(unique,min(5,len(unique)))
+                words = text.split()
+                sample = random.sample(words,min(5,len(words)))
 
                 for w in sample:
-                    correct = f"{w} relates to core study concept"
+                    correct = f"{w} relates to the topic"
                     options = [
                         correct,
                         f"{w} unrelated",
@@ -150,49 +135,79 @@ def workspace():
                         f"{w} meaningless"
                     ]
                     random.shuffle(options)
+
                     quiz.append({
                         "question":f"What best describes '{w}'?",
                         "options":options,
                         "correct":correct
                     })
 
-        # Chat
-        if "chat_message" in request.form:
-            msg = request.form["chat_message"]
-            reply = f"AI: Based on your uploaded notes, review key terms and focus on conceptual clarity."
-            c.execute("INSERT INTO chat_history VALUES (?,?)",(username,"You: "+msg))
-            c.execute("INSERT INTO chat_history VALUES (?,?)",(username,reply))
+                session["quiz"] = quiz
+
+        # -------- SUBMIT QUIZ --------
+        if "submit_quiz" in request.form:
+            quiz = session.get("quiz",[])
+            answers = request.form.getlist("answer")
+
+            correct_count = 0
+            y_true = []
+            y_pred = []
+
+            for i,q in enumerate(quiz):
+                correct = q["correct"]
+                y_true.append(1)
+                if i < len(answers) and answers[i] == correct:
+                    correct_count += 1
+                    y_pred.append(1)
+                else:
+                    y_pred.append(0)
+
+            total = len(quiz)
+            score = int((correct_count/total)*100) if total else 0
+
+            precision = correct_count/total if total else 0
+            recall = precision
+            f1 = (2*precision*recall/(precision+recall)) if precision else 0
+
+            if score > 80:
+                difficulty = "hard"
+            elif score < 40:
+                difficulty = "easy"
+            else:
+                difficulty = "medium"
+
+            c.execute("""INSERT INTO quiz_attempts 
+                         VALUES (?,?,?,?,?,?)""",
+                      (username,score,precision,recall,f1,difficulty))
             conn.commit()
 
-    c.execute("SELECT message FROM chat_history WHERE username=?",(username,))
-    history = c.fetchall()
+            result = f"You scored {score}% | F1: {round(f1,2)}"
+
     conn.close()
 
     return render_template("workspace.html",
-        user=username,
-        summary=summary,
-        keywords=keywords,
-        quiz=quiz,
-        history=history)
+                           summary=summary,
+                           keywords=keywords,
+                           quiz=quiz,
+                           result=result)
 
-# ---------- ANALYTICS ----------
+# -------- ANALYTICS --------
 @app.route("/analytics")
 def analytics():
     if "user" not in session:
         return redirect("/")
 
     username = session["user"]
+
     conn = sqlite3.connect("scholarai.db")
     c = conn.cursor()
     c.execute("SELECT score FROM quiz_attempts WHERE username=?",(username,))
-    scores = c.fetchall()
+    scores = [row[0] for row in c.fetchall()]
     conn.close()
 
-    score_values = [s[0] for s in scores]
+    return render_template("analytics.html",scores=scores)
 
-    return render_template("analytics.html",scores=score_values)
-
-# ---------- LOGOUT ----------
+# -------- LOGOUT --------
 @app.route("/logout")
 def logout():
     session.clear()
