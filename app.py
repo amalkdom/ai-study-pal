@@ -41,26 +41,6 @@ def register():
 
 
 # ---------------- DASHBOARD ----------------
-@app.route("/dashboard")
-def dashboard():
-    if "user" not in session:
-        return redirect(url_for("login"))
-
-    username = session["user"]
-
-    if username not in user_stats:
-        user_stats[username] = {"xp": 0, "score": 0}
-
-    stats = user_stats[username]
-
-    weak_area = "Advanced Concepts"
-    if stats["score"] > 3:
-        weak_area = "Strong Performance"
-
-    return render_template("dashboard.html",
-                           user=username,
-                           stats=stats,
-                           weak_area=weak_area)
 
 
 # ---------------- SMART TUTOR ----------------
@@ -204,6 +184,7 @@ def notes():
         summary = f"Summary: {content[:100]}..."
 
     return render_template("notes.html", summary=summary)
+
 
 
 
