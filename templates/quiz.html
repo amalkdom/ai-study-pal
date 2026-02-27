@@ -1,44 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ScholarAI Quiz</title>
+<title>ScholarAI Quiz Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
-body{font-family:Arial;background:#f4f6f9;padding:40px;}
-.card{background:white;padding:20px;border-radius:12px;margin-bottom:20px;}
-button{padding:8px 12px;border-radius:12px;border:none;background:#4a90e2;color:white;}
-input,select{padding:8px;margin:5px;border-radius:8px;border:1px solid #ccc;}
+body{
+    font-family:'Inter',sans-serif;
+    background:#0f172a;
+    color:#e2e8f0;
+    padding:40px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+.card{
+    background:#111827;
+    padding:25px;
+    border-radius:12px;
+    border:1px solid #1f2937;
+    margin-bottom:20px;
+}
+
+textarea{
+    width:100%;
+    height:150px;
+    padding:15px;
+    border-radius:10px;
+    border:1px solid #1f2937;
+    background:#0f172a;
+    color:white;
+}
+
+button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    background:#6366f1;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#7c3aed;
+}
+
+.option{
+    margin:10px 0;
+    padding:10px;
+    background:#1f2937;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.timer{
+    font-size:18px;
+    margin-bottom:15px;
+    color:#facc15;
+}
+
+.result{
+    padding:15px;
+    border-radius:10px;
+    margin-top:20px;
+}
+.correct{
+    background:#064e3b;
+}
+.wrong{
+    background:#7f1d1d;
+}
 </style>
 </head>
+
 <body>
 
-<h2>Generate Quiz</h2>
+<div class="container">
+
+<h2>Quiz Engine (Generate from Notes)</h2>
 
 <div class="card">
 <form method="POST">
-<input type="text" name="module" placeholder="Enter Module Name" required>
-
-<select name="level">
-<option value="easy">Easy</option>
-<option value="medium">Medium</option>
-<option value="hard">Hard</option>
-</select>
-
-<button type="submit">Generate Question</button>
+<textarea name="notes" placeholder="Paste your notes here to generate quiz..."></textarea>
+<br><br>
+<button type="submit">Generate Quiz</button>
 </form>
 </div>
 
 {% if question %}
 <div class="card">
+
+<div class="timer">Time Left: <span id="time">60</span>s</div>
+
 <h3>{{ question }}</h3>
+
 <form method="POST">
-<input type="hidden" name="module" value="">
-<input type="hidden" name="level" value="">
-<input type="text" name="answer" placeholder="Your Answer">
-<button type="submit">Submit</button>
+{% for option in options %}
+<div class="option">
+<input type="radio" name="answer" value="{{ option }}" required>
+{{ option }}
+</div>
+{% endfor %}
+<br>
+<button type="submit">Submit Answer</button>
 </form>
-<p>{{ result }}</p>
+
+{% if result %}
+<div class="result {% if result == 'Correct!' %}correct{% else %}wrong{% endif %}">
+{{ result }}
 </div>
 {% endif %}
+
+</div>
+{% endif %}
+
+</div>
+
+<script>
+let time = 60;
+let timer = document.getElementById("time");
+
+if(timer){
+    let countdown = setInterval(function(){
+        time--;
+        timer.innerHTML = time;
+        if(time <= 0){
+            clearInterval(countdown);
+            alert("Time's up!");
+        }
+    },1000);
+}
+</script>
 
 </body>
 </html>
