@@ -2,7 +2,6 @@
 <html>
 <head>
 <title>ScholarAI</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
@@ -14,38 +13,39 @@
 
 body {
     font-family:'Inter', sans-serif;
-    background:#f5f7fa;
-    color:#1f2937;
+    background:#0f172a;
+    color:#e2e8f0;
+    height:100vh;
+    overflow:hidden;
 }
 
-/* Layout */
-.wrapper {
+.layout {
     display:flex;
+    height:100vh;
 }
 
 /* Sidebar */
 .sidebar {
-    width:240px;
-    height:100vh;
+    width:220px;
     background:#111827;
-    color:#e5e7eb;
     padding:30px 20px;
+    border-right:1px solid #1f2937;
 }
 
 .sidebar h2 {
-    font-weight:600;
-    font-size:20px;
+    font-size:18px;
     margin-bottom:40px;
 }
 
 .sidebar a {
     display:block;
-    padding:12px 14px;
+    padding:12px;
     margin-bottom:8px;
-    text-decoration:none;
     color:#9ca3af;
+    text-decoration:none;
     border-radius:8px;
     font-size:14px;
+    transition:0.2s;
 }
 
 .sidebar a:hover {
@@ -53,94 +53,170 @@ body {
     color:white;
 }
 
-/* Main */
-.main {
+/* Main Chat Area */
+.chat-area {
     flex:1;
-    padding:50px;
-}
-
-/* Top Header */
-.header {
     display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:40px;
+    flex-direction:column;
+    padding:40px;
 }
 
-.header h1 {
-    font-size:22px;
-    font-weight:500;
+.chat-header {
+    font-size:20px;
+    margin-bottom:20px;
 }
 
-/* Stats Grid */
-.grid {
-    display:grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap:25px;
-}
-
-.card {
-    background:white;
-    padding:25px;
+.chat-box {
+    flex:1;
+    background:#111827;
+    border:1px solid #1f2937;
     border-radius:12px;
-    border:1px solid #e5e7eb;
+    padding:20px;
+    overflow-y:auto;
+    margin-bottom:20px;
 }
 
-.card-title {
-    font-size:13px;
-    color:#6b7280;
-    margin-bottom:8px;
+.message {
+    margin-bottom:15px;
 }
 
-.card-value {
+.user {
+    color:#38bdf8;
+}
+
+.ai {
+    color:#a78bfa;
+}
+
+/* Input */
+.input-area {
+    display:flex;
+}
+
+.input-area input {
+    flex:1;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #1f2937;
+    background:#0f172a;
+    color:white;
+}
+
+.input-area button {
+    margin-left:10px;
+    padding:12px 18px;
+    border-radius:8px;
+    border:none;
+    background:#6366f1;
+    color:white;
+    cursor:pointer;
+}
+
+.input-area button:hover {
+    background:#7c3aed;
+}
+
+/* Analytics Panel */
+.analytics {
+    width:260px;
+    background:#111827;
+    padding:30px 20px;
+    border-left:1px solid #1f2937;
+}
+
+.analytics h3 {
+    font-size:14px;
+    margin-bottom:10px;
+    color:#9ca3af;
+}
+
+.metric {
+    margin-bottom:25px;
+}
+
+.metric-value {
     font-size:22px;
     font-weight:600;
 }
 
-/* Insight Section */
-.insight {
-    margin-top:40px;
-    background:white;
-    padding:30px;
-    border-radius:12px;
-    border:1px solid #e5e7eb;
+.progress-bar {
+    height:6px;
+    background:#1f2937;
+    border-radius:10px;
+    margin-top:8px;
 }
 
-.insight h3 {
-    font-size:16px;
-    margin-bottom:10px;
-}
-
-/* Footer */
-.footer {
-    margin-top:60px;
-    font-size:13px;
-    color:#9ca3af;
+.progress-fill {
+    height:6px;
+    background:#6366f1;
+    border-radius:10px;
+    width:{{ stats.get('xp',0) }}%;
+    transition:width 0.5s ease;
 }
 </style>
 </head>
 
 <body>
 
-<div class="wrapper">
+<div class="layout">
 
+<!-- Sidebar -->
 <div class="sidebar">
 <h2>ScholarAI</h2>
-<a href="/dashboard">Dashboard</a>
-<a href="/quiz">AI Quiz</a>
-<a href="/summarize">Notes AI</a>
+<a href="/dashboard">AI Assistant</a>
+<a href="/summarize">Smart Notes</a>
+<a href="/quiz">Quiz Engine</a>
 <a href="/progress">Analytics</a>
 <a href="/logout">Logout</a>
 </div>
 
-<div class="main">
+<!-- Chat Area -->
+<div class="chat-area">
 
-<div class="header">
-<h1>Welcome, {{ user }}</h1>
-<div>
-{% if stats.get('xp',0) >= 100 %}
+<div class="chat-header">
+AI Study Assistant
+</div>
+
+<div class="chat-box" id="chatBox">
+<div class="message ai">AI: Hello {{ user }}, how can I help you study today?</div>
+</div>
+
+<form method="POST" action="/dashboard">
+<div class="input-area">
+<input type="text" name="message" placeholder="Ask anything about your subject...">
+<button type="submit">Send</button>
+</div>
+</form>
+
+</div>
+
+<!-- Analytics -->
+<div class="analytics">
+
+<div class="metric">
+<h3>XP</h3>
+<div class="metric-value">{{ stats.get('xp',0) }}</div>
+<div class="progress-bar">
+<div class="progress-fill"></div>
+</div>
+</div>
+
+<div class="metric">
+<h3>Score</h3>
+<div class="metric-value">{{ stats.get('score',0) }}</div>
+</div>
+
+<div class="metric">
+<h3>Weak Area</h3>
+<div class="metric-value">{{ weak_area }}</div>
+</div>
+
+<div class="metric">
+<h3>Status</h3>
+<div class="metric-value">
+{% if stats.get('xp',0) > 80 %}
 Advanced
-{% elif stats.get('xp',0) >= 50 %}
+{% elif stats.get('xp',0) > 40 %}
 Intermediate
 {% else %}
 Beginner
@@ -148,49 +224,8 @@ Beginner
 </div>
 </div>
 
-<div class="grid">
-
-<div class="card">
-<div class="card-title">Total XP</div>
-<div class="card-value">{{ stats.get('xp',0) }}</div>
 </div>
 
-<div class="card">
-<div class="card-title">Quiz Score</div>
-<div class="card-value">{{ stats.get('score',0) }}</div>
-</div>
-
-<div class="card">
-<div class="card-title">Weak Area</div>
-<div class="card-value">{{ weak_area }}</div>
-</div>
-
-<div class="card">
-<div class="card-title">Progress Status</div>
-<div class="card-value">
-{% if stats.get('score',0) > 3 %}
-Improving
-{% else %}
-Needs Focus
-{% endif %}
-</div>
-</div>
-
-</div>
-
-<div class="insight">
-<h3>Performance Insight</h3>
-<p>{{ motivational_message }}</p>
-</div>
-
-<div class="footer">
-<hr style="margin:30px 0;">
-Built With: Python • Flask • scikit-learn • Keras • NLTK  
-<br>
-© 2026 ScholarAI
-</div>
-
-</div>
 </div>
 
 </body>
