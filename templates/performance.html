@@ -1,1 +1,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<canvas id="chart"></canvas>
+<script>
+let data = {{ scores|safe }};
+new Chart(document.getElementById("chart"), {
+    type: 'line',
+    data: {
+        labels: data.map((_,i)=>"Quiz "+(i+1)),
+        datasets: [{
+            label: "Performance",
+            data: data,
+            borderColor: "#3b82f6"
+        }]
+    }
+});
+</script>
