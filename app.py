@@ -2,9 +2,9 @@ from flask import Flask, render_template, request, redirect, session, url_for
 import random
 
 app = Flask(__name__)
-app.secret_key = "scholarai_secret_key"
+app.secret_key = "scholarai_secret"
 
-# Temporary in-memory user storage (Demo only)
+# Demo in-memory storage
 users = {}
 user_stats = {}
 
@@ -19,7 +19,7 @@ def login():
             session["user"] = username
             return redirect(url_for("dashboard"))
         else:
-            return render_template("login.html", error="Invalid credentials")
+            return render_template("login.html")
 
     return render_template("login.html")
 
@@ -31,9 +31,6 @@ def register():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        if username in users:
-            return render_template("register.html", error="User already exists")
-
         users[username] = password
         return redirect(url_for("login"))
 
@@ -41,45 +38,29 @@ def register():
 
 
 # ---------------- DASHBOARD ----------------
-
-
-# ---------------- SMART TUTOR ----------------
-@app.route("/tutor", methods=["GET", "POST"])
-def tutor():
+@app.route("/dashboard")
+def dashboard():
     if "user" not in session:
         return redirect(url_for("login"))
 
-    response = ""
-    if request.method == "POST":
-        question = request.form.get("question")
-        response = f"Here's a simplified explanation for: {question}"
+    username = session["user"]
 
-    return render_template("tutor.html", response=response)
+    if username not in user_stats:
+        user_stats[username] = {"xp": 0, "score": 0}
 
+    stats = user_stats[username]
 
-# ---------------- STUDY PLANNER ----------------
-@app.route("/planner", methods=["GET", "POST"])
-def planner():
-    if "user" not in session:
-        return redirect(url_for("login"))
+    weak_area = "Needs More Practice"
+    if stats["score"] > 3:
+        weak_area = "Strong Performance"
 
-    plan = []
-    if request.method == "POST":
-        subject = request.form.get("subject")
-        hours = request.form.get("hours")
-
-        if subject and hours:
-            try:
-                hours = int(hours)
-                plan = [f"Hour {i}: Study {subject}" for i in range(1, hours + 1)]
-            except:
-                plan = ["Invalid input"]
-
-    return render_template("planner.html", plan=plan)
+    return render_template("dashboard.html",
+                           user=username,
+                           stats=stats,
+                           weak_area=weak_area)
 
 
 # ---------------- QUIZ ----------------
-# ---------------- ADVANCED QUIZ SYSTEM ----------------
 @app.route("/quiz", methods=["GET", "POST"])
 def quiz():
     if "user" not in session:
@@ -92,8 +73,6 @@ def quiz():
 
     questions = []
     result = ""
-    module = ""
-    level = ""
 
     if request.method == "POST":
         module = request.form.get("module")
@@ -101,67 +80,31 @@ def quiz():
         answer = request.form.get("answer")
 
         if level == "easy":
-            questions = [
-                {"q": f"What is {module}?", "options": ["Basic Concept", "Advanced Theory", "Unrelated Topic"], "correct": "Basic Concept"}
-            ]
+            correct = "Basic Concept"
         elif level == "medium":
-            questions = [
-                {"q": f"Explain core idea of {module}", "options": ["Key Principle", "Random Guess", "Wrong Idea"], "correct": "Key Principle"}
-            ]
-        elif level == "hard":
-            questions = [
-                {"q": f"Advanced application of {module}?", "options": ["Complex Analysis", "Simple Definition", "Irrelevant"], "correct": "Complex Analysis"}
-            ]
+            correct = "Key Principle"
+        else:
+            correct = "Complex Analysis"
+
+        questions = [{
+            "q": f"Question about {module}",
+            "options": ["Basic Concept", "Key Principle", "Complex Analysis"],
+            "correct": correct
+        }]
 
         if answer:
-            if answer == questions[0]["correct"]:
-                result = "✅ Correct!"
+            if answer == correct:
+                result = "Correct!"
                 user_stats[username]["xp"] += 10
                 user_stats[username]["score"] += 1
             else:
-                result = "❌ Wrong! Review concept."
+                result = "Wrong!"
 
     return render_template("quiz.html",
                            questions=questions,
                            result=result,
                            stats=user_stats[username])
-# ---------------- QUIZ WITH LEVELS ----------------
-@app.route("/quiz", methods=["GET", "POST"])
-def quiz():
-    if "user" not in session:
-        return redirect(url_for("login"))
 
-    questions = []
-    level = ""
-    module = ""
-
-    if request.method == "POST":
-        level = request.form.get("level")
-        module = request.form.get("module")
-
-        if level == "easy":
-            questions = [
-                f"What is the basic concept of {module}?",
-                f"Define {module}.",
-                f"List one example of {module}."
-            ]
-        elif level == "medium":
-            questions = [
-                f"Explain how {module} works.",
-                f"Describe key components of {module}.",
-                f"Why is {module} important?"
-            ]
-        elif level == "hard":
-            questions = [
-                f"Analyze advanced applications of {module}.",
-                f"Compare different approaches in {module}.",
-                f"Solve a complex problem related to {module}."
-            ]
-
-    return render_template("quiz.html",
-                           questions=questions,
-                           level=level,
-                           module=module)
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -172,23 +115,3 @@ def logout():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
-    # ---------------- NOTES GENERATOR ----------------
-@app.route("/notes", methods=["GET", "POST"])
-def notes():
-    if "user" not in session:
-        return redirect(url_for("login"))
-
-    summary = ""
-    if request.method == "POST":
-        content = request.form.get("content")
-        summary = f"Summary: {content[:100]}..."
-
-    return render_template("notes.html", summary=summary)
-
-
-
-
-
-
-
-
