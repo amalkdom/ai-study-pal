@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ScholarAI Dashboard</title>
+<title>ScholarAI</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-body {
+* {
     margin:0;
-    font-family:'Inter', sans-serif;
-    background:#f8fafc;
-    color:#1e293b;
+    padding:0;
+    box-sizing:border-box;
 }
 
-.container {
+body {
+    font-family:'Inter', sans-serif;
+    background:#f5f7fa;
+    color:#1f2937;
+}
+
+/* Layout */
+.wrapper {
     display:flex;
 }
 
@@ -21,38 +27,39 @@ body {
 .sidebar {
     width:240px;
     height:100vh;
-    background:#0f172a;
-    color:white;
+    background:#111827;
+    color:#e5e7eb;
     padding:30px 20px;
 }
 
 .sidebar h2 {
-    font-weight:700;
+    font-weight:600;
+    font-size:20px;
     margin-bottom:40px;
 }
 
 .sidebar a {
     display:block;
-    padding:12px;
-    margin-bottom:10px;
+    padding:12px 14px;
+    margin-bottom:8px;
     text-decoration:none;
-    color:#cbd5e1;
+    color:#9ca3af;
     border-radius:8px;
-    transition:0.2s;
+    font-size:14px;
 }
 
 .sidebar a:hover {
-    background:#1e293b;
+    background:#1f2937;
     color:white;
 }
 
 /* Main */
 .main {
     flex:1;
-    padding:40px;
+    padding:50px;
 }
 
-/* Header */
+/* Top Header */
 .header {
     display:flex;
     justify-content:space-between;
@@ -61,19 +68,12 @@ body {
 }
 
 .header h1 {
-    font-size:26px;
+    font-size:22px;
+    font-weight:500;
 }
 
-.badge {
-    background:#6366f1;
-    color:white;
-    padding:6px 12px;
-    border-radius:20px;
-    font-size:13px;
-}
-
-/* Cards */
-.cards {
+/* Stats Grid */
+.grid {
     display:grid;
     grid-template-columns: repeat(4, 1fr);
     gap:25px;
@@ -82,54 +82,53 @@ body {
 .card {
     background:white;
     padding:25px;
-    border-radius:16px;
-    box-shadow:0 10px 25px rgba(0,0,0,0.05);
-    transition:0.2s;
+    border-radius:12px;
+    border:1px solid #e5e7eb;
 }
 
-.card:hover {
-    transform:translateY(-4px);
+.card-title {
+    font-size:13px;
+    color:#6b7280;
+    margin-bottom:8px;
 }
 
-.card h3 {
-    margin:0;
-    font-size:14px;
-    color:#64748b;
-}
-
-.card p {
-    font-size:24px;
-    margin-top:10px;
+.card-value {
+    font-size:22px;
     font-weight:600;
 }
 
-/* Motivation */
-.motivation {
+/* Insight Section */
+.insight {
     margin-top:40px;
-    padding:25px;
-    border-radius:16px;
-    background:linear-gradient(135deg,#6366f1,#8b5cf6);
-    color:white;
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    border:1px solid #e5e7eb;
+}
+
+.insight h3 {
+    font-size:16px;
+    margin-bottom:10px;
 }
 
 /* Footer */
 .footer {
     margin-top:60px;
-    font-size:14px;
-    color:#94a3b8;
+    font-size:13px;
+    color:#9ca3af;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="wrapper">
 
 <div class="sidebar">
 <h2>ScholarAI</h2>
 <a href="/dashboard">Dashboard</a>
 <a href="/quiz">AI Quiz</a>
-<a href="/summarize">AI Notes</a>
+<a href="/summarize">Notes AI</a>
 <a href="/progress">Analytics</a>
 <a href="/logout">Logout</a>
 </div>
@@ -137,36 +136,8 @@ body {
 <div class="main">
 
 <div class="header">
-<h1>Welcome back, {{ user }}</h1>
-<span class="badge">
-{% if stats.get('xp',0) >= 50 %}
-Pro Learner
-{% else %}
-Rising Scholar
-{% endif %}
-</span>
-</div>
-
-<div class="cards">
-
-<div class="card">
-<h3>Total XP</h3>
-<p>{{ stats.get('xp',0) }}</p>
-</div>
-
-<div class="card">
-<h3>Quiz Score</h3>
-<p>{{ stats.get('score',0) }}</p>
-</div>
-
-<div class="card">
-<h3>Weak Area</h3>
-<p>{{ weak_area }}</p>
-</div>
-
-<div class="card">
-<h3>Progress Level</h3>
-<p>
+<h1>Welcome, {{ user }}</h1>
+<div>
 {% if stats.get('xp',0) >= 100 %}
 Advanced
 {% elif stats.get('xp',0) >= 50 %}
@@ -174,24 +145,52 @@ Intermediate
 {% else %}
 Beginner
 {% endif %}
-</p>
+</div>
+</div>
+
+<div class="grid">
+
+<div class="card">
+<div class="card-title">Total XP</div>
+<div class="card-value">{{ stats.get('xp',0) }}</div>
+</div>
+
+<div class="card">
+<div class="card-title">Quiz Score</div>
+<div class="card-value">{{ stats.get('score',0) }}</div>
+</div>
+
+<div class="card">
+<div class="card-title">Weak Area</div>
+<div class="card-value">{{ weak_area }}</div>
+</div>
+
+<div class="card">
+<div class="card-title">Progress Status</div>
+<div class="card-value">
+{% if stats.get('score',0) > 3 %}
+Improving
+{% else %}
+Needs Focus
+{% endif %}
+</div>
 </div>
 
 </div>
 
-<div class="motivation">
-<h3>Motivational Insight</h3>
+<div class="insight">
+<h3>Performance Insight</h3>
 <p>{{ motivational_message }}</p>
 </div>
 
 <div class="footer">
-<hr>
-<p>Built With: Python • Flask • scikit-learn • Keras • NLTK</p>
-<p>© 2026 ScholarAI | Capstone Project</p>
+<hr style="margin:30px 0;">
+Built With: Python • Flask • scikit-learn • Keras • NLTK  
+<br>
+© 2026 ScholarAI
 </div>
 
 </div>
-
 </div>
 
 </body>
