@@ -1,41 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ScholarAI Progress</title>
+<title>Analytics</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body{font-family:Arial;background:#f4f6f9;padding:40px;}
-canvas{background:white;padding:20px;border-radius:12px;margin-bottom:20px;}
+body{background:#0f172a;color:white;font-family:Arial;padding:40px;}
+.card{background:#111827;padding:20px;border-radius:10px;margin-bottom:20px;}
 </style>
 </head>
 <body>
 
-<h2>Progress Analytics</h2>
+<h2>Performance Analytics</h2>
 
-<canvas id="pieChart"></canvas>
-<canvas id="barChart"></canvas>
+<div class="card">
+<canvas id="historyChart"></canvas>
+</div>
 
-<h3>Quiz Accuracy: 85%</h3>
-<h3>F1-Score (ML Demo): 0.88</h3>
+<div class="card">
+<h3>ML Metrics</h3>
+<p>Precision: {{ stats.precision }}</p>
+<p>Recall: {{ stats.recall }}</p>
+<p>F1 Score: {{ stats.f1 }}</p>
+<p>Current Difficulty: {{ stats.difficulty_level }}</p>
+</div>
+
+<div class="card">
+<h3>Weak Concepts</h3>
+<ul>
+{% for concept, count in stats.concept_mistakes.items() %}
+<li>{{ concept }} (Mistakes: {{ count }})</li>
+{% endfor %}
+</ul>
+</div>
 
 <script>
-new Chart(document.getElementById("pieChart"),{
-type:"pie",
+new Chart(document.getElementById("historyChart"),{
+type:"line",
 data:{
-labels:["Math","Science","Programming"],
-datasets:[{data:[40,30,30]}]
-}
-});
-
-new Chart(document.getElementById("barChart"),{
-type:"bar",
-data:{
-labels:["Week1","Week2","Week3"],
-datasets:[{label:"Hours Studied",data:[5,8,10]}]
+labels: {{ stats.quiz_history|tojson }},
+datasets:[{
+label:"Accuracy %",
+data: {{ stats.quiz_history|tojson }},
+borderColor:"#6366f1"
+}]
 }
 });
 </script>
 
 </body>
-</html>
 </html>
