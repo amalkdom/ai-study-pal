@@ -6,18 +6,21 @@
 </head>
 <body>
 
-<div class="sidebar">
-    <h2>AI Study</h2>
-    <a href="/dashboard">Dashboard</a>
-    <a href="/quiz">AI Quiz</a>
-    <a href="/chatbot">AI Chat</a>
-    <a href="/notes">Notes → Quiz</a>
-    <a href="/youtube">YT Summary</a>
-    <a href="/timer">Pomodoro</a>
-    <a href="/logout">Logout</a>
+<div class="navbar">
+    <h1>AI Study Platform</h1>
+    <div>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/quiz">Quiz</a>
+        <a href="/chatbot">Chat</a>
+        <a href="/notes">Notes</a>
+        <a href="/youtube">YouTube</a>
+        <a href="/planner">Planner</a>
+        <a href="/timer">Timer</a>
+        <a href="/logout">Logout</a>
+    </div>
 </div>
 
-<div class="main">
+<div class="container">
     {% block content %}{% endblock %}
 </div>
 
