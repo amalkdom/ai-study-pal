@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, url_for
+import sqlite3
 import random
 import nltk
 from nltk.tokenize import word_tokenize
@@ -11,175 +12,158 @@ nltk.download('stopwords')
 app = Flask(__name__)
 app.secret_key = "scholarai_secret"
 
-users = {}
-user_stats = {}
+# ---------------- DATABASE SETUP ----------------
+def init_db():
+    conn = sqlite3.connect("scholarai.db")
+    c = conn.cursor()
+
+    c.execute('''CREATE TABLE IF NOT EXISTS users
+                 (username TEXT PRIMARY KEY, password TEXT)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS stats
+                 (username TEXT PRIMARY KEY,
+                  xp INTEGER,
+                  score INTEGER,
+                  difficulty TEXT,
+                  precision REAL,
+                  recall REAL,
+                  f1 REAL)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS quiz_history
+                 (username TEXT, score INTEGER)''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS chat_history
+                 (username TEXT, message TEXT)''')
+
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # ---------------- LOGIN ----------------
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = request.form["username"]
+        password = request.form["password"]
 
-        if username in users and users[username] == password:
+        conn = sqlite3.connect("scholarai.db")
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE username=? AND password=?",
+                  (username,password))
+        user = c.fetchone()
+        conn.close()
+
+        if user:
             session["user"] = username
-            return redirect(url_for("dashboard"))
+            return redirect("/dashboard")
 
     return render_template("login.html")
 
 # ---------------- REGISTER ----------------
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        users[username] = password
-        return redirect(url_for("login"))
+        username = request.form["username"]
+        password = request.form["password"]
+
+        conn = sqlite3.connect("scholarai.db")
+        c = conn.cursor()
+        c.execute("INSERT OR IGNORE INTO users VALUES (?,?)",
+                  (username,password))
+        c.execute("INSERT OR IGNORE INTO stats VALUES (?,?,?,?,?,?,?)",
+                  (username,0,0,"medium",0,0,0))
+        conn.commit()
+        conn.close()
+
+        return redirect("/")
 
     return render_template("register.html")
 
 # ---------------- DASHBOARD ----------------
-@app.route("/dashboard", methods=["GET", "POST"])
+@app.route("/dashboard")
 def dashboard():
     if "user" not in session:
-        return redirect(url_for("login"))
+        return redirect("/")
 
     username = session["user"]
 
-    if username not in user_stats:
-        user_stats[username] = {
-            "xp": 0,
-            "score": 0,
-            "quiz_history": [],
-            "concept_mistakes": {},
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "difficulty_level": "medium"
-        }
+    conn = sqlite3.connect("scholarai.db")
+    c = conn.cursor()
+    c.execute("SELECT xp,score,difficulty,precision,recall,f1 FROM stats WHERE username=?",(username,))
+    stats = c.fetchone()
+    conn.close()
 
-    stats = user_stats[username]
+    stats_dict = {
+        "xp":stats[0],
+        "score":stats[1],
+        "difficulty":stats[2],
+        "precision":stats[3],
+        "recall":stats[4],
+        "f1":stats[5]
+    }
 
     return render_template("dashboard.html",
                            user=username,
-                           stats=stats)
+                           stats=stats_dict)
 
-# ---------------- QUIZ ----------------
-@app.route("/quiz", methods=["GET", "POST"])
-def quiz():
+# ---------------- AI CHAT ----------------
+@app.route("/chat", methods=["GET","POST"])
+def chat():
     if "user" not in session:
-        return redirect(url_for("login"))
+        return redirect("/")
 
     username = session["user"]
-    stats = user_stats[username]
+    response = None
 
-    questions = []
-    result = None
-    explanations = []
+    conn = sqlite3.connect("scholarai.db")
+    c = conn.cursor()
 
     if request.method == "POST":
+        message = request.form["message"]
 
-        notes = request.form.get("notes")
-        submitted_answers = request.form.getlist("answer")
+        ai_reply = f"AI Response: Based on your query about '{message}', review core concepts carefully."
 
-        # GENERATE QUESTIONS
-        if notes:
-            words = word_tokenize(notes.lower())
-            words = [w for w in words if w.isalnum()]
-            filtered = [w for w in words if w not in stopwords.words('english')]
+        c.execute("INSERT INTO chat_history VALUES (?,?)",(username,"You: "+message))
+        c.execute("INSERT INTO chat_history VALUES (?,?)",(username,"AI: "+ai_reply))
+        conn.commit()
 
-            freq = Counter(filtered)
-            keywords = [word for word, count in freq.most_common(5)]
+        response = ai_reply
 
-            for word in keywords[:5]:
+    c.execute("SELECT message FROM chat_history WHERE username=?",(username,))
+    history = c.fetchall()
+    conn.close()
 
-                if stats["difficulty_level"] == "easy":
-                    correct = f"{word} is a basic concept"
-                elif stats["difficulty_level"] == "hard":
-                    correct = f"{word} relates to advanced analysis"
-                else:
-                    correct = f"{word} is an important concept"
+    return render_template("chat.html",
+                           history=history,
+                           response=response)
 
-                options = [
-                    correct,
-                    f"{word} is unrelated",
-                    f"{word} is random",
-                    f"{word} has no relevance"
-                ]
-
-                random.shuffle(options)
-
-                questions.append({
-                    "question": f"What is the meaning of '{word}'?",
-                    "options": options,
-                    "correct": correct
-                })
-
-            session["quiz_questions"] = questions
-
-        # EVALUATE
-        elif submitted_answers:
-            questions = session.get("quiz_questions", [])
-            correct_count = 0
-
-            for i, answer in enumerate(submitted_answers):
-                correct = questions[i]["correct"]
-                concept = questions[i]["question"]
-
-                if answer == correct:
-                    correct_count += 1
-                    explanations.append("Correct. Good understanding.")
-                else:
-                    explanations.append(f"Incorrect. Correct answer: {correct}")
-
-                    if concept not in stats["concept_mistakes"]:
-                        stats["concept_mistakes"][concept] = 1
-                    else:
-                        stats["concept_mistakes"][concept] += 1
-
-            total = len(questions)
-            score_percentage = int((correct_count / total) * 100)
-
-            stats["xp"] += correct_count * 10
-            stats["score"] += correct_count
-            stats["quiz_history"].append(score_percentage)
-
-            precision = correct_count / total if total else 0
-            recall = precision
-            f1 = (2 * precision * recall) / (precision + recall) if precision else 0
-
-            stats["precision"] = round(precision, 2)
-            stats["recall"] = round(recall, 2)
-            stats["f1"] = round(f1, 2)
-
-            if score_percentage > 80:
-                stats["difficulty_level"] = "hard"
-            elif score_percentage < 40:
-                stats["difficulty_level"] = "easy"
-            else:
-                stats["difficulty_level"] = "medium"
-
-            result = f"You scored {score_percentage}%"
-
-    return render_template("quiz.html",
-                           questions=questions,
-                           result=result,
-                           explanations=explanations,
-                           difficulty=stats["difficulty_level"])
-
-# ---------------- PROGRESS ----------------
-@app.route("/progress")
-def progress():
+# ---------------- SMART NOTES ----------------
+@app.route("/notes", methods=["GET","POST"])
+def notes():
     if "user" not in session:
-        return redirect(url_for("login"))
+        return redirect("/")
 
-    username = session["user"]
-    stats = user_stats[username]
+    summary = ""
+    keywords = []
 
-    return render_template("progress.html", stats=stats)
+    if request.method == "POST":
+        text = request.form["content"]
+
+        words = word_tokenize(text.lower())
+        words = [w for w in words if w.isalnum()]
+        filtered = [w for w in words if w not in stopwords.words('english')]
+
+        freq = Counter(filtered)
+        keywords = [word for word,count in freq.most_common(8)]
+        summary = " ".join(text.split()[:50])
+
+    return render_template("notes.html",
+                           summary=summary,
+                           keywords=keywords)
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
-    return redirect(url_for("login"))
+    session.pop("user",None)
+    return redirect("/")
