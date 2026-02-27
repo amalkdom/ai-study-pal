@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ScholarAI Workspace</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:#0f172a;
+    color:#e2e8f0;
+}
+.container{
+    display:flex;
+    height:100vh;
+}
+.left{
+    width:20%;
+    background:#111827;
+    padding:20px;
+    border-right:1px solid #1f2937;
+}
+.center{
+    width:55%;
+    padding:20px;
+}
+.right{
+    width:25%;
+    background:#111827;
+    padding:20px;
+    border-left:1px solid #1f2937;
+}
+textarea,input{
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    background:#1f2937;
+    border:none;
+    color:white;
+}
+button{
+    padding:8px 12px;
+    background:#6366f1;
+    border:none;
+    border-radius:6px;
+    color:white;
+    margin-top:5px;
+}
+.card{
+    background:#1f2937;
+    padding:15px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+.keyword{
+    display:inline-block;
+    background:#6366f1;
+    padding:6px 10px;
+    border-radius:15px;
+    margin:4px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="left">
+<h3>Sources</h3>
+<form method="POST">
+<textarea name="document" placeholder="Paste your notes here..."></textarea>
+<button type="submit">Save Document</button>
+</form>
+</div>
+
+<div class="center">
+<h3>AI Chat</h3>
+<div class="card" style="height:300px;overflow-y:auto;">
+{% for msg in history %}
+<p>{{ msg[0] }}</p>
+{% endfor %}
+</div>
+
+<form method="POST">
+<input type="text" name="chat_message" placeholder="Ask AI...">
+<button type="submit">Send</button>
+</form>
+</div>
+
+<div class="right">
+<h3>Studio</h3>
+
+<form method="POST">
+<button name="generate_summary">Generate Summary</button>
+</form>
+
+{% if summary %}
+<div class="card">
+<h4>Summary</h4>
+<p>{{ summary }}</p>
+</div>
+{% endif %}
+
+{% if keywords %}
+<div class="card">
+<h4>Mind Map</h4>
+{% for word in keywords %}
+<span class="keyword">{{ word }}</span>
+{% endfor %}
+</div>
+{% endif %}
+
+<form method="POST">
+<button name="generate_quiz">Generate Quiz</button>
+</form>
+
+{% if quiz_questions %}
+<div class="card">
+<h4>Quiz</h4>
+{% for q in quiz_questions %}
+<p><b>{{ q.question }}</b></p>
+{% for opt in q.options %}
+<p>- {{ opt }}</p>
+{% endfor %}
+<hr>
+{% endfor %}
+</div>
+{% endif %}
+
+</div>
+
+</div>
+
+</body>
+</html>
