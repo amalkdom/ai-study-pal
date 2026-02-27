@@ -1,202 +1,220 @@
-from flask import Flask, render_template, request, redirect, session, url_for
-import sqlite3
-import os
-import nltk
-import random
-import PyPDF2
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import precision_score, recall_score, f1_score
-import numpy as np
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ScholarAI Workspace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-app = Flask(__name__)
-app.secret_key = "scholarai_pro_secret"
+    <style>
+        body{
+            margin:0;
+            font-family:'Inter',sans-serif;
+            background:#0f172a;
+            color:#e2e8f0;
+        }
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        .layout{
+            display:flex;
+            height:100vh;
+        }
 
-# ---------- NLTK SETUP ----------
-try:
-    nltk.data.find('tokenizers/punkt')
-except:
-    nltk.download('punkt')
+        .sidebar{
+            width:220px;
+            background:#111827;
+            padding:20px;
+            border-right:1px solid #1f2937;
+        }
 
-# ---------- DATABASE ----------
-def init_db():
-    conn = sqlite3.connect("scholarai.db")
-    c = conn.cursor()
+        .sidebar h2{
+            margin-bottom:30px;
+        }
 
-    c.execute("""CREATE TABLE IF NOT EXISTS users(
-        username TEXT PRIMARY KEY,
-        password TEXT)""")
+        .nav-btn{
+            display:block;
+            margin-bottom:10px;
+            padding:10px;
+            background:#1f2937;
+            border-radius:8px;
+            text-decoration:none;
+            color:white;
+            transition:0.3s;
+        }
 
-    c.execute("""CREATE TABLE IF NOT EXISTS documents(
-        username TEXT,
-        content TEXT)""")
+        .nav-btn:hover{
+            background:#6366f1;
+        }
 
-    c.execute("""CREATE TABLE IF NOT EXISTS chat_history(
-        username TEXT,
-        message TEXT)""")
+        .main{
+            flex:1;
+            display:flex;
+        }
 
-    c.execute("""CREATE TABLE IF NOT EXISTS quiz_attempts(
-        username TEXT,
-        score INTEGER,
-        precision REAL,
-        recall REAL,
-        f1 REAL)""")
+        .center{
+            flex:2;
+            padding:25px;
+            overflow-y:auto;
+        }
 
-    conn.commit()
-    conn.close()
+        .studio{
+            flex:1;
+            background:#111827;
+            padding:25px;
+            border-left:1px solid #1f2937;
+            overflow-y:auto;
+        }
 
-init_db()
+        .card{
+            background:#1f2937;
+            padding:15px;
+            border-radius:12px;
+            margin-bottom:15px;
+            animation:fadeIn 0.5s ease-in;
+        }
 
-# ---------- LOGIN ----------
-@app.route("/", methods=["GET","POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        textarea,input{
+            width:100%;
+            padding:10px;
+            border-radius:8px;
+            border:none;
+            background:#0f172a;
+            color:white;
+            margin-bottom:10px;
+        }
 
-        conn = sqlite3.connect("scholarai.db")
-        c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=? AND password=?",(username,password))
-        user = c.fetchone()
-        conn.close()
+        button{
+            padding:8px 12px;
+            border:none;
+            border-radius:8px;
+            background:#6366f1;
+            color:white;
+            cursor:pointer;
+            transition:0.3s;
+        }
 
-        if user:
-            session["user"] = username
-            return redirect("/workspace")
+        button:hover{
+            background:#4f46e5;
+        }
 
-    return render_template("login.html")
+        .keyword{
+            display:inline-block;
+            background:#6366f1;
+            padding:6px 10px;
+            border-radius:20px;
+            margin:5px;
+        }
 
-# ---------- REGISTER ----------
-@app.route("/register", methods=["GET","POST"])
-def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        .quiz-option{
+            background:#0f172a;
+            padding:8px;
+            border-radius:8px;
+            margin-bottom:6px;
+        }
 
-        conn = sqlite3.connect("scholarai.db")
-        c = conn.cursor()
-        c.execute("INSERT OR IGNORE INTO users VALUES (?,?)",(username,password))
-        conn.commit()
-        conn.close()
+        .result-box{
+            background:#0ea5e9;
+            padding:12px;
+            border-radius:10px;
+            margin-top:10px;
+        }
 
-        return redirect("/")
+        @keyframes fadeIn{
+            from{opacity:0;transform:translateY(10px);}
+            to{opacity:1;transform:translateY(0);}
+        }
+    </style>
+</head>
 
-    return render_template("register.html")
+<body>
 
-# ---------- WORKSPACE ----------
-@app.route("/workspace", methods=["GET","POST"])
-def workspace():
-    if "user" not in session:
-        return redirect("/")
+<div class="layout">
 
-    username = session["user"]
-    conn = sqlite3.connect("scholarai.db")
-    c = conn.cursor()
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>ScholarAI</h2>
+        <a href="/workspace" class="nav-btn">Workspace</a>
+        <a href="/analytics" class="nav-btn">Analytics</a>
+        <a href="/logout" class="nav-btn">Logout</a>
+    </div>
 
-    summary = ""
-    keywords = []
-    quiz = []
-    history = []
+    <div class="main">
 
-    if request.method == "POST":
+        <!-- Center -->
+        <div class="center">
 
-        # File Upload
-        if "file" in request.files:
-            file = request.files["file"]
-            if file.filename.endswith(".pdf"):
-                path = os.path.join(UPLOAD_FOLDER,file.filename)
-                file.save(path)
-                reader = PyPDF2.PdfReader(path)
-                text = ""
-                for page in reader.pages:
-                    text += page.extract_text()
-            else:
-                text = file.read().decode("utf-8")
+            <h3>Upload Study Material</h3>
 
-            c.execute("DELETE FROM documents WHERE username=?",(username,))
-            c.execute("INSERT INTO documents VALUES (?,?)",(username,text))
-            conn.commit()
+            <div class="card">
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="file" name="file">
+                    <button type="submit">Upload</button>
+                </form>
+            </div>
 
-        # Summary + TF-IDF
-        if "generate_summary" in request.form:
-            c.execute("SELECT content FROM documents WHERE username=?",(username,))
-            doc = c.fetchone()
-            if doc:
-                text = doc[0]
-                vectorizer = TfidfVectorizer(stop_words="english",max_features=10)
-                X = vectorizer.fit_transform([text])
-                keywords = vectorizer.get_feature_names_out()
-                summary = " ".join(text.split()[:80])
+        </div>
 
-        # Generate Quiz
-        if "generate_quiz" in request.form:
-            c.execute("SELECT content FROM documents WHERE username=?",(username,))
-            doc = c.fetchone()
-            if doc:
-                text = doc[0]
-                words = nltk.word_tokenize(text.lower())
-                words = [w for w in words if w.isalpha()]
-                unique = list(set(words))
-                sample = random.sample(unique,min(5,len(unique)))
+        <!-- Studio -->
+        <div class="studio">
 
-                for w in sample:
-                    correct = f"{w} relates to core study concept"
-                    options = [
-                        correct,
-                        f"{w} unrelated",
-                        f"{w} random",
-                        f"{w} meaningless"
-                    ]
-                    random.shuffle(options)
-                    quiz.append({
-                        "question":f"What best describes '{w}'?",
-                        "options":options,
-                        "correct":correct
-                    })
+            <h3>AI Studio</h3>
 
-        # Chat
-        if "chat_message" in request.form:
-            msg = request.form["chat_message"]
-            reply = f"AI: Based on your uploaded notes, review key terms and focus on conceptual clarity."
-            c.execute("INSERT INTO chat_history VALUES (?,?)",(username,"You: "+msg))
-            c.execute("INSERT INTO chat_history VALUES (?,?)",(username,reply))
-            conn.commit()
+            <!-- Summary -->
+            <form method="POST">
+                <button name="generate_summary">Generate Summary</button>
+            </form>
 
-    c.execute("SELECT message FROM chat_history WHERE username=?",(username,))
-    history = c.fetchall()
-    conn.close()
+            {% if summary %}
+            <div class="card">
+                <h4>Summary</h4>
+                <p>{{ summary }}</p>
+            </div>
+            {% endif %}
 
-    return render_template("workspace.html",
-        user=username,
-        summary=summary,
-        keywords=keywords,
-        quiz=quiz,
-        history=history)
+            <!-- Keywords -->
+            {% if keywords %}
+            <div class="card">
+                <h4>Mind Map Keywords</h4>
+                {% for word in keywords %}
+                    <span class="keyword">{{ word }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-# ---------- ANALYTICS ----------
-@app.route("/analytics")
-def analytics():
-    if "user" not in session:
-        return redirect("/")
+            <!-- Quiz -->
+            <form method="POST">
+                <button name="generate_quiz">Generate Quiz</button>
+            </form>
 
-    username = session["user"]
-    conn = sqlite3.connect("scholarai.db")
-    c = conn.cursor()
-    c.execute("SELECT score FROM quiz_attempts WHERE username=?",(username,))
-    scores = c.fetchall()
-    conn.close()
+            {% if quiz %}
+            <div class="card">
+                <h4>Quiz</h4>
+                <form method="POST">
+                    {% for q in quiz %}
+                        <p><strong>{{ q.question }}</strong></p>
+                        {% for opt in q.options %}
+                            <div class="quiz-option">
+                                <input type="radio" name="answer" value="{{ opt }}" required>
+                                {{ opt }}
+                            </div>
+                        {% endfor %}
+                        <hr>
+                    {% endfor %}
+                    <button name="submit_quiz">Submit Quiz</button>
+                </form>
+            </div>
+            {% endif %}
 
-    score_values = [s[0] for s in scores]
+            {% if result %}
+            <div class="result-box">
+                {{ result }}
+            </div>
+            {% endif %}
 
-    return render_template("analytics.html",scores=score_values)
+        </div>
 
-# ---------- LOGOUT ----------
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
+    </div>
 
-if __name__ == "__main__":
-    app.run(debug=True)
+</div>
+
+</body>
+</html>
