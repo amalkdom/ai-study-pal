@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AI Assistant</title>
+<style>
+body{background:#0f172a;color:white;font-family:Arial;padding:40px;}
+.chat-box{background:#111827;padding:20px;border-radius:10px;height:400px;overflow-y:auto;}
+input{width:80%;padding:10px;border-radius:8px;border:none;}
+button{padding:10px;border-radius:8px;background:#6366f1;color:white;border:none;}
+.message{margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<h2>AI Study Assistant</h2>
+
+<div class="chat-box">
+{% for msg in history %}
+<div class="message">{{ msg[0] }}</div>
+{% endfor %}
+</div>
+
+<form method="POST">
+<input type="text" name="message" placeholder="Ask anything...">
+<button type="submit">Send</button>
+</form>
+
+</body>
+</html>
