@@ -4,13 +4,6 @@ import random
 app = Flask(__name__)
 app.secret_key = "scholarai_secret"
 
-# Demo in-memory storage
-users = {}from flask import Flask, render_template, request, redirect, session, url_for
-import random
-
-app = Flask(__name__)
-app.secret_key = "scholarai_secret"
-
 users = {}
 user_stats = {}
 
@@ -57,7 +50,7 @@ def dashboard():
     if stats["score"] > 3:
         weak_area = "Strong Performance"
 
-    motivational_message = "You're making steady progress. Keep going!"
+    motivational_message = "You're making steady progress. Keep it up!"
 
     return render_template("dashboard.html",
                            user=username,
@@ -66,7 +59,7 @@ def dashboard():
                            motivational_message=motivational_message)
 
 
-# ---------------- QUIZ WITH MODULE INPUT ----------------
+# ---------------- QUIZ ----------------
 @app.route("/quiz", methods=["GET", "POST"])
 def quiz():
     if "user" not in session:
@@ -86,7 +79,6 @@ def quiz():
         answer = request.form.get("answer")
 
         correct_answer = "Concept A"
-
         question = f"{level.capitalize()} question from module: {module}"
 
         if answer:
@@ -99,11 +91,10 @@ def quiz():
 
     return render_template("quiz.html",
                            question=question,
-                           result=result,
-                           stats=user_stats[username])
+                           result=result)
 
 
-# ---------------- NOTES SUMMARIZER ----------------
+# ---------------- SUMMARIZER ----------------
 @app.route("/summarize", methods=["GET", "POST"])
 def summarize():
     if "user" not in session:
@@ -131,7 +122,7 @@ def summarize():
                            tips=tips)
 
 
-# ---------------- PROGRESS PAGE ----------------
+# ---------------- PROGRESS ----------------
 @app.route("/progress")
 def progress():
     if "user" not in session:
