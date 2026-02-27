@@ -2,58 +2,125 @@
 <html>
 <head>
 <title>ScholarAI Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
 body {
     margin:0;
-    font-family:Arial;
-    background:#f4f6f9;
+    font-family:'Inter', sans-serif;
+    background:#f8fafc;
+    color:#1e293b;
 }
-.container { display:flex; }
+
+.container {
+    display:flex;
+}
+
+/* Sidebar */
 .sidebar {
-    width:220px;
-    background:#1e1e2f;
-    color:white;
+    width:240px;
     height:100vh;
-    padding:20px;
+    background:#0f172a;
+    color:white;
+    padding:30px 20px;
 }
+
+.sidebar h2 {
+    font-weight:700;
+    margin-bottom:40px;
+}
+
 .sidebar a {
     display:block;
-    color:white;
-    padding:10px;
+    padding:12px;
+    margin-bottom:10px;
     text-decoration:none;
+    color:#cbd5e1;
+    border-radius:8px;
+    transition:0.2s;
 }
-.sidebar a:hover { background:#4a90e2; }
+
+.sidebar a:hover {
+    background:#1e293b;
+    color:white;
+}
+
+/* Main */
 .main {
     flex:1;
-    padding:30px;
+    padding:40px;
 }
-.cards {
+
+/* Header */
+.header {
     display:flex;
-    gap:20px;
-    flex-wrap:wrap;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:40px;
 }
+
+.header h1 {
+    font-size:26px;
+}
+
+.badge {
+    background:#6366f1;
+    color:white;
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:13px;
+}
+
+/* Cards */
+.cards {
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:25px;
+}
+
 .card {
     background:white;
-    padding:20px;
-    border-radius:12px;
-    width:220px;
-    box-shadow:0 5px 15px rgba(0,0,0,0.1);
+    padding:25px;
+    border-radius:16px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.05);
+    transition:0.2s;
 }
-.purple-card {
-    background:#e6d9ff;
-    padding:20px;
-    border-radius:12px;
-    margin-top:20px;
+
+.card:hover {
+    transform:translateY(-4px);
 }
-button {
-    padding:8px 12px;
-    border-radius:12px;
-    border:none;
-    background:#4a90e2;
+
+.card h3 {
+    margin:0;
+    font-size:14px;
+    color:#64748b;
+}
+
+.card p {
+    font-size:24px;
+    margin-top:10px;
+    font-weight:600;
+}
+
+/* Motivation */
+.motivation {
+    margin-top:40px;
+    padding:25px;
+    border-radius:16px;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
     color:white;
+}
+
+/* Footer */
+.footer {
+    margin-top:60px;
+    font-size:14px;
+    color:#94a3b8;
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
@@ -61,44 +128,70 @@ button {
 <div class="sidebar">
 <h2>ScholarAI</h2>
 <a href="/dashboard">Dashboard</a>
-<a href="/quiz">Quiz</a>
-<a href="/summarize">Summarize Notes</a>
-<a href="/progress">Progress</a>
+<a href="/quiz">AI Quiz</a>
+<a href="/summarize">AI Notes</a>
+<a href="/progress">Analytics</a>
 <a href="/logout">Logout</a>
 </div>
 
 <div class="main">
 
-<h1>Welcome {{ user }}</h1>
+<div class="header">
+<h1>Welcome back, {{ user }}</h1>
+<span class="badge">
+{% if stats.get('xp',0) >= 50 %}
+Pro Learner
+{% else %}
+Rising Scholar
+{% endif %}
+</span>
+</div>
 
 <div class="cards">
+
 <div class="card">
-<h3>XP</h3>
+<h3>Total XP</h3>
 <p>{{ stats.get('xp',0) }}</p>
 </div>
 
 <div class="card">
-<h3>Score</h3>
+<h3>Quiz Score</h3>
 <p>{{ stats.get('score',0) }}</p>
-</div>
-
-<div class="card">
-<h3>Badge</h3>
-<p>{% if stats.get('xp',0) >= 50 %}Scholar{% else %}Beginner{% endif %}</p>
 </div>
 
 <div class="card">
 <h3>Weak Area</h3>
 <p>{{ weak_area }}</p>
 </div>
+
+<div class="card">
+<h3>Progress Level</h3>
+<p>
+{% if stats.get('xp',0) >= 100 %}
+Advanced
+{% elif stats.get('xp',0) >= 50 %}
+Intermediate
+{% else %}
+Beginner
+{% endif %}
+</p>
 </div>
 
-<div class="purple-card">
-<h3>Motivational Feedback</h3>
+</div>
+
+<div class="motivation">
+<h3>Motivational Insight</h3>
 <p>{{ motivational_message }}</p>
 </div>
 
+<div class="footer">
+<hr>
+<p>Built With: Python • Flask • scikit-learn • Keras • NLTK</p>
+<p>© 2026 ScholarAI | Capstone Project</p>
 </div>
+
+</div>
+
 </div>
 
 </body>
