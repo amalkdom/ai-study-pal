@@ -68,40 +68,92 @@ def quiz():
     username = session["user"]
 
     if username not in user_stats:
-        user_stats[username] = {"xp": 0, "score": 0}
+        user_stats[username] = {
+            "xp": 0,
+            "score": 0,
+            "quiz_history": []
+        }
 
-    question = ""
-    options = []
-    result = ""
+    questions = []
+    result = None
+    explanations = []
+    difficulty = "medium"
 
     if request.method == "POST":
+
         notes = request.form.get("notes")
-        answer = request.form.get("answer")
+        difficulty = request.form.get("difficulty")
+        submitted_answers = request.form.getlist("answer")
 
+        # ---------------- GENERATE QUESTIONS ----------------
         if notes:
-            words = notes.split()
-            keyword = words[0] if words else "Concept"
+            from nltk.corpus import stopwords
+            from nltk.tokenize import word_tokenize
+            from collections import Counter
 
-            question = f"What is the main idea of '{keyword}'?"
-            options = ["Concept A", "Concept B", "Concept C"]
+            words = word_tokenize(notes.lower())
+            words = [w for w in words if w.isalnum()]
+            filtered = [w for w in words if w not in stopwords.words('english')]
 
-            session["correct_answer"] = "Concept A"
+            freq = Counter(filtered)
+            keywords = [word for word, count in freq.most_common(5)]
 
-        elif answer:
-            if answer == session.get("correct_answer"):
-                result = "Correct!"
-                user_stats[username]["xp"] += 10
-                user_stats[username]["score"] += 1
-            else:
-                result = "Incorrect!"
+            for word in keywords[:5]:
+                if difficulty == "easy":
+                    correct = f"{word} is a basic concept"
+                elif difficulty == "hard":
+                    correct = f"{word} relates to advanced analysis"
+                else:
+                    correct = f"{word} is an important concept"
 
-            question = "Answer Submitted"
-            options = []
+                options = [
+                    correct,
+                    f"{word} is unrelated",
+                    f"{word} is a random term",
+                    f"{word} has no meaning"
+                ]
 
-    return render_template("quiz.html",
-                           question=question,
-                           options=options,
-                           result=result)
+                random.shuffle(options)
+
+                questions.append({
+                    "question": f"What is the meaning of '{word}'?",
+                    "options": options,
+                    "correct": correct
+                })
+
+            session["quiz_questions"] = questions
+
+        # ---------------- EVALUATE ANSWERS ----------------
+        elif submitted_answers:
+            questions = session.get("quiz_questions", [])
+            correct_count = 0
+
+            for i, answer in enumerate(submitted_answers):
+                correct = questions[i]["correct"]
+                if answer == correct:
+                    correct_count += 1
+                    explanations.append("Correct. Good understanding.")
+                else:
+                    explanations.append(
+                        f"Incorrect. Correct answer: {correct}"
+                    )
+
+            score_percentage = int((correct_count / len(questions)) * 100)
+
+            user_stats[username]["xp"] += correct_count * 10
+            user_stats[username]["score"] += correct_count
+
+            user_stats[username]["quiz_history"].append(score_percentage)
+
+            result = f"You scored {score_percentage}%"
+
+    return render_template(
+        "quiz.html",
+        questions=questions,
+        result=result,
+        explanations=explanations,
+        difficulty=difficulty
+    )
 
 # ---------------- SUMMARIZER ----------------
 @app.route("/summarize", methods=["GET", "POST"])
@@ -145,6 +197,7 @@ def progress():
 def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
+
 
 
 
