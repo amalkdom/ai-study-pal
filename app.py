@@ -71,28 +71,37 @@ def quiz():
         user_stats[username] = {"xp": 0, "score": 0}
 
     question = ""
+    options = []
     result = ""
 
     if request.method == "POST":
-        module = request.form.get("module")
-        level = request.form.get("level")
+        notes = request.form.get("notes")
         answer = request.form.get("answer")
 
-        correct_answer = "Concept A"
-        question = f"{level.capitalize()} question from module: {module}"
+        if notes:
+            words = notes.split()
+            keyword = words[0] if words else "Concept"
 
-        if answer:
-            if answer == correct_answer:
+            question = f"What is the main idea of '{keyword}'?"
+            options = ["Concept A", "Concept B", "Concept C"]
+
+            session["correct_answer"] = "Concept A"
+
+        elif answer:
+            if answer == session.get("correct_answer"):
                 result = "Correct!"
                 user_stats[username]["xp"] += 10
                 user_stats[username]["score"] += 1
             else:
-                result = "Incorrect. Review the module."
+                result = "Incorrect!"
+
+            question = "Answer Submitted"
+            options = []
 
     return render_template("quiz.html",
                            question=question,
+                           options=options,
                            result=result)
-
 
 # ---------------- SUMMARIZER ----------------
 @app.route("/summarize", methods=["GET", "POST"])
@@ -136,5 +145,6 @@ def progress():
 def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
+
 
 
