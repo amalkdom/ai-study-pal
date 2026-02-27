@@ -1,217 +1,162 @@
-from flask import Flask, render_template, request, redirect, session, url_for
-import sqlite3
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from youtube_transcript_api import YouTubeTranscriptApi
+import openai
+import datetime
 import os
-import random
-import nltk
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 app = Flask(__name__)
-app.secret_key = "scholarai_pro_secret"
+app.config['SECRET_KEY'] = 'supersecretkey'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
 
-# -------- SAFE NLTK --------
-try:
-    nltk.data.find('tokenizers/punkt')
-except:
-    nltk.download('punkt')
+# ===========================
+# DATABASE MODEL
+# ===========================
 
-# -------- DATABASE --------
-def init_db():
-    conn = sqlite3.connect("scholarai.db")
-    c = conn.cursor()
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(150), unique=True)
+    password = db.Column(db.String(150))
+    streak = db.Column(db.Integer, default=0)
+    last_login = db.Column(db.Date)
 
-    c.execute("""CREATE TABLE IF NOT EXISTS users(
-        username TEXT PRIMARY KEY,
-        password TEXT)""")
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-    c.execute("""CREATE TABLE IF NOT EXISTS documents(
-        username TEXT,
-        content TEXT)""")
+# ===========================
+# HOME
+# ===========================
 
-    c.execute("""CREATE TABLE IF NOT EXISTS quiz_attempts(
-        username TEXT,
-        score INTEGER,
-        precision REAL,
-        recall REAL,
-        f1 REAL,
-        difficulty TEXT)""")
+@app.route('/')
+def home():
+    return render_template('login.html')
 
-    conn.commit()
-    conn.close()
+# ===========================
+# REGISTER
+# ===========================
 
-init_db()
-
-# -------- LOGIN --------
-@app.route("/", methods=["GET","POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        conn = sqlite3.connect("scholarai.db")
-        c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=? AND password=?",(username,password))
-        user = c.fetchone()
-        conn.close()
-
-        if user:
-            session["user"] = username
-            return redirect("/workspace")
-
-    return render_template("login.html")
-
-# -------- REGISTER --------
-@app.route("/register", methods=["GET","POST"])
+@app.route('/register', methods=['GET','POST'])
 def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+    if request.method == 'POST':
+        user = User(username=request.form['username'],
+                    password=request.form['password'])
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('register.html')
 
-        conn = sqlite3.connect("scholarai.db")
-        c = conn.cursor()
-        c.execute("INSERT OR IGNORE INTO users VALUES (?,?)",(username,password))
-        conn.commit()
-        conn.close()
+# ===========================
+# LOGIN
+# ===========================
 
-        return redirect("/")
+@app.route('/login', methods=['POST'])
+def login():
+    user = User.query.filter_by(username=request.form['username']).first()
+    if user and user.password == request.form['password']:
+        login_user(user)
 
-    return render_template("register.html")
+        today = datetime.date.today()
+        if user.last_login != today:
+            user.streak += 1
+            user.last_login = today
+            db.session.commit()
 
-# -------- WORKSPACE --------
-@app.route("/workspace", methods=["GET","POST"])
-def workspace():
-    if "user" not in session:
-        return redirect("/")
+        return redirect(url_for('dashboard'))
+    flash("Invalid credentials")
+    return redirect(url_for('home'))
 
-    username = session["user"]
+# ===========================
+# DASHBOARD
+# ===========================
 
-    conn = sqlite3.connect("scholarai.db")
-    c = conn.cursor()
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html', streak=current_user.streak)
 
-    summary = ""
-    keywords = []
-    quiz = []
+# ===========================
+# AI QUIZ
+# ===========================
+
+@app.route('/quiz', methods=['GET','POST'])
+@login_required
+def quiz():
     result = None
-    difficulty = "medium"
+    if request.method == 'POST':
+        topic = request.form['topic']
+        prompt = f"Generate 5 multiple choice quiz questions on {topic}"
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role":"user","content":prompt}]
+        )
+        result = response['choices'][0]['message']['content']
+    return render_template('quiz.html', result=result)
 
-    # -------- UPLOAD DOCUMENT --------
-    if request.method == "POST":
+# ===========================
+# AI CHATBOT
+# ===========================
 
-        if "file" in request.files:
-            file = request.files["file"]
-            text = file.read().decode("utf-8")
-            c.execute("DELETE FROM documents WHERE username=?",(username,))
-            c.execute("INSERT INTO documents VALUES (?,?)",(username,text))
-            conn.commit()
+@app.route('/chatbot', methods=['GET','POST'])
+@login_required
+def chatbot():
+    reply = None
+    if request.method == 'POST':
+        doubt = request.form['doubt']
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role":"user","content":doubt}]
+        )
+        reply = response['choices'][0]['message']['content']
+    return render_template('chatbot.html', reply=reply)
 
-        # -------- GENERATE SUMMARY --------
-        if "generate_summary" in request.form:
-            c.execute("SELECT content FROM documents WHERE username=?",(username,))
-            doc = c.fetchone()
-            if doc:
-                text = doc[0]
-                vectorizer = TfidfVectorizer(stop_words="english",max_features=8)
-                X = vectorizer.fit_transform([text])
-                keywords = vectorizer.get_feature_names_out()
-                summary = " ".join(text.split()[:80])
+# ===========================
+# NOTES TO QUIZ
+# ===========================
 
-        # -------- GENERATE QUIZ --------
-        if "generate_quiz" in request.form:
-            c.execute("SELECT content FROM documents WHERE username=?",(username,))
-            doc = c.fetchone()
-            if doc:
-                text = doc[0]
-                words = text.split()
-                sample = random.sample(words,min(5,len(words)))
+@app.route('/notes', methods=['GET','POST'])
+@login_required
+def notes():
+    quiz = None
+    if request.method == 'POST':
+        notes_text = request.form['notes']
+        prompt = f"Create quiz from this text:\n{notes_text}"
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role":"user","content":prompt}]
+        )
+        quiz = response['choices'][0]['message']['content']
+    return render_template('notes.html', quiz=quiz)
 
-                for w in sample:
-                    correct = f"{w} relates to the topic"
-                    options = [
-                        correct,
-                        f"{w} unrelated",
-                        f"{w} random",
-                        f"{w} meaningless"
-                    ]
-                    random.shuffle(options)
+# ===========================
+# YOUTUBE SUMMARY
+# ===========================
 
-                    quiz.append({
-                        "question":f"What best describes '{w}'?",
-                        "options":options,
-                        "correct":correct
-                    })
+@app.route('/youtube', methods=['GET','POST'])
+@login_required
+def youtube():
+    summary = None
+    if request.method == 'POST':
+        link = request.form['link']
+        video_id = link.split("v=")[1]
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        text = " ".join([x['text'] for x in transcript])
 
-                session["quiz"] = quiz
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role":"user","content":f"Summarize this:\n{text}"}]
+        )
+        summary = response['choices'][0]['message']['content']
+    return render_template('youtube.html', summary=summary)
 
-        # -------- SUBMIT QUIZ --------
-        if "submit_quiz" in request.form:
-            quiz = session.get("quiz",[])
-            answers = request.form.getlist("answer")
-
-            correct_count = 0
-            y_true = []
-            y_pred = []
-
-            for i,q in enumerate(quiz):
-                correct = q["correct"]
-                y_true.append(1)
-                if i < len(answers) and answers[i] == correct:
-                    correct_count += 1
-                    y_pred.append(1)
-                else:
-                    y_pred.append(0)
-
-            total = len(quiz)
-            score = int((correct_count/total)*100) if total else 0
-
-            precision = correct_count/total if total else 0
-            recall = precision
-            f1 = (2*precision*recall/(precision+recall)) if precision else 0
-
-            if score > 80:
-                difficulty = "hard"
-            elif score < 40:
-                difficulty = "easy"
-            else:
-                difficulty = "medium"
-
-            c.execute("""INSERT INTO quiz_attempts 
-                         VALUES (?,?,?,?,?,?)""",
-                      (username,score,precision,recall,f1,difficulty))
-            conn.commit()
-
-            result = f"You scored {score}% | F1: {round(f1,2)}"
-
-    conn.close()
-
-    return render_template("workspace.html",
-                           summary=summary,
-                           keywords=keywords,
-                           quiz=quiz,
-                           result=result)
-
-# -------- ANALYTICS --------
-@app.route("/analytics")
-def analytics():
-    if "user" not in session:
-        return redirect("/")
-
-    username = session["user"]
-
-    conn = sqlite3.connect("scholarai.db")
-    c = conn.cursor()
-    c.execute("SELECT score FROM quiz_attempts WHERE username=?",(username,))
-    scores = [row[0] for row in c.fetchall()]
-    conn.close()
-
-    return render_template("analytics.html",scores=scores)
-
-# -------- LOGOUT --------
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
+# ===========================
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
