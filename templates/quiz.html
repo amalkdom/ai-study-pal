@@ -1,48 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>ScholarAI - Advanced Quiz</title>
-<link rel="stylesheet" href="/static/style.css">
+<title>ScholarAI Quiz</title>
+<style>
+body{font-family:Arial;background:#f4f6f9;padding:40px;}
+.card{background:white;padding:20px;border-radius:12px;margin-bottom:20px;}
+button{padding:8px 12px;border-radius:12px;border:none;background:#4a90e2;color:white;}
+input,select{padding:8px;margin:5px;border-radius:8px;border:1px solid #ccc;}
+</style>
 </head>
 <body>
 
-<div class="quiz-container">
-    <h2>📝 Adaptive Quiz</h2>
+<h2>Generate Quiz</h2>
 
-    <form method="POST">
-        <input name="module" placeholder="Enter Topic" required>
-        <select name="level" required>
-            <option value="">Select Difficulty</option>
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-        </select>
-        <button type="submit">Generate</button>
-    </form>
+<div class="card">
+<form method="POST">
+<input type="text" name="module" placeholder="Enter Module Name" required>
 
-    {% if questions %}
-        <h3>{{ questions[0].q }}</h3>
+<select name="level">
+<option value="easy">Easy</option>
+<option value="medium">Medium</option>
+<option value="hard">Hard</option>
+</select>
 
-        <form method="POST">
-            {% for option in questions[0].options %}
-                <input type="radio" name="answer" value="{{ option }}" required> {{ option }}<br>
-            {% endfor %}
-            <input type="hidden" name="module" value="{{ request.form.module }}">
-            <input type="hidden" name="level" value="{{ request.form.level }}">
-            <br>
-            <button type="submit">Submit Answer</button>
-        </form>
-    {% endif %}
-
-    {% if result %}
-        <h3>{{ result }}</h3>
-    {% endif %}
-
-    <h4>XP: {{ stats.xp }} | Score: {{ stats.score }}</h4>
-
-    <br>
-    <a href="/dashboard">⬅ Back</a>
+<button type="submit">Generate Question</button>
+</form>
 </div>
+
+{% if question %}
+<div class="card">
+<h3>{{ question }}</h3>
+<form method="POST">
+<input type="hidden" name="module" value="">
+<input type="hidden" name="level" value="">
+<input type="text" name="answer" placeholder="Your Answer">
+<button type="submit">Submit</button>
+</form>
+<p>{{ result }}</p>
+</div>
+{% endif %}
 
 </body>
 </html>
