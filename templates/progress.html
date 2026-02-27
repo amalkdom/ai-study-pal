@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ScholarAI Progress</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:Arial;background:#f4f6f9;padding:40px;}
+canvas{background:white;padding:20px;border-radius:12px;margin-bottom:20px;}
+</style>
+</head>
+<body>
+
+<h2>Progress Analytics</h2>
+
+<canvas id="pieChart"></canvas>
+<canvas id="barChart"></canvas>
+
+<h3>Quiz Accuracy: 85%</h3>
+<h3>F1-Score (ML Demo): 0.88</h3>
+
+<script>
+new Chart(document.getElementById("pieChart"),{
+type:"pie",
+data:{
+labels:["Math","Science","Programming"],
+datasets:[{data:[40,30,30]}]
+}
+});
+
+new Chart(document.getElementById("barChart"),{
+type:"bar",
+data:{
+labels:["Week1","Week2","Week3"],
+datasets:[{label:"Hours Studied",data:[5,8,10]}]
+}
+});
+</script>
+
+</body>
+</html>
