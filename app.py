@@ -5,6 +5,12 @@ app = Flask(__name__)
 app.secret_key = "scholarai_secret"
 
 # Demo in-memory storage
+users = {}from flask import Flask, render_template, request, redirect, session, url_for
+import random
+
+app = Flask(__name__)
+app.secret_key = "scholarai_secret"
+
 users = {}
 user_stats = {}
 
@@ -18,8 +24,6 @@ def login():
         if username in users and users[username] == password:
             session["user"] = username
             return redirect(url_for("dashboard"))
-        else:
-            return render_template("login.html")
 
     return render_template("login.html")
 
@@ -30,7 +34,6 @@ def register():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
-
         users[username] = password
         return redirect(url_for("login"))
 
@@ -54,13 +57,16 @@ def dashboard():
     if stats["score"] > 3:
         weak_area = "Strong Performance"
 
+    motivational_message = "You're making steady progress. Keep going!"
+
     return render_template("dashboard.html",
                            user=username,
                            stats=stats,
-                           weak_area=weak_area)
+                           weak_area=weak_area,
+                           motivational_message=motivational_message)
 
 
-# ---------------- QUIZ ----------------
+# ---------------- QUIZ WITH MODULE INPUT ----------------
 @app.route("/quiz", methods=["GET", "POST"])
 def quiz():
     if "user" not in session:
@@ -71,7 +77,7 @@ def quiz():
     if username not in user_stats:
         user_stats[username] = {"xp": 0, "score": 0}
 
-    questions = []
+    question = ""
     result = ""
 
     if request.method == "POST":
@@ -79,31 +85,59 @@ def quiz():
         level = request.form.get("level")
         answer = request.form.get("answer")
 
-        if level == "easy":
-            correct = "Basic Concept"
-        elif level == "medium":
-            correct = "Key Principle"
-        else:
-            correct = "Complex Analysis"
+        correct_answer = "Concept A"
 
-        questions = [{
-            "q": f"Question about {module}",
-            "options": ["Basic Concept", "Key Principle", "Complex Analysis"],
-            "correct": correct
-        }]
+        question = f"{level.capitalize()} question from module: {module}"
 
         if answer:
-            if answer == correct:
+            if answer == correct_answer:
                 result = "Correct!"
                 user_stats[username]["xp"] += 10
                 user_stats[username]["score"] += 1
             else:
-                result = "Wrong!"
+                result = "Incorrect. Review the module."
 
     return render_template("quiz.html",
-                           questions=questions,
+                           question=question,
                            result=result,
                            stats=user_stats[username])
+
+
+# ---------------- NOTES SUMMARIZER ----------------
+@app.route("/summarize", methods=["GET", "POST"])
+def summarize():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    summary = ""
+    keywords = []
+    tips = []
+
+    if request.method == "POST":
+        text = request.form.get("content")
+
+        summary = " ".join(text.split()[:50])
+        keywords = list(set(text.split()))[:5]
+
+        tips = [
+            "Review key terms daily",
+            "Practice definitions twice a week",
+            "Create flashcards"
+        ]
+
+    return render_template("summarize.html",
+                           summary=summary,
+                           keywords=keywords,
+                           tips=tips)
+
+
+# ---------------- PROGRESS PAGE ----------------
+@app.route("/progress")
+def progress():
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    return render_template("progress.html")
 
 
 # ---------------- LOGOUT ----------------
