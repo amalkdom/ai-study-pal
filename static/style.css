@@ -1,56 +1,102 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    margin:0;
-    font-family: Arial;
-    display:flex;
+    font-family: 'Inter', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
 }
 
-.sidebar {
-    width:220px;
-    background:#1e1e2f;
-    color:white;
-    height:100vh;
-    padding:20px;
+.navbar {
+    height: 60px;
+    background: #1e293b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    border-bottom: 1px solid #334155;
 }
 
-.sidebar a {
-    display:block;
-    color:white;
-    padding:10px;
-    text-decoration:none;
+.navbar h1 {
+    font-size: 18px;
+    font-weight: 600;
 }
 
-.sidebar a:hover {
-    background:#4a90e2;
+.navbar a {
+    color: #94a3b8;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 14px;
 }
 
-.main {
-    flex:1;
-    padding:40px;
-    background:#f4f6f9;
+.navbar a:hover {
+    color: #3b82f6;
 }
 
-.cards {
-    display:flex;
-    gap:20px;
+.container {
+    padding: 40px;
 }
 
 .card {
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    width:200px;
-    box-shadow:0 5px 15px rgba(0,0,0,0.1);
-}
-.dark-mode {
-    background-color:#1e1e2f !important;
-    color:white !important;
+    background: #1e293b;
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    margin-bottom: 30px;
 }
 
-.dark-mode .card {
-    background:#2c2c3e !important;
-    color:white !important;
+.card h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
 }
 
-.dark-mode .sidebar {
-    background:#111 !important;
+input, textarea {
+    width: 100%;
+    padding: 12px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #e2e8f0;
+    margin-bottom: 15px;
+}
+
+button {
+    background: #3b82f6;
+    border: none;
+    padding: 12px 18px;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+button:hover {
+    background: #2563eb;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.stat {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+}
+
+.stat h3 {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.stat p {
+    font-size: 22px;
+    font-weight: 600;
 }
