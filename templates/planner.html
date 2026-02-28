@@ -1,24 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Study Planner</title>
-<link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
 
-<h2>Personalized Study Planner</h2>
+<div class="card">
+    <h1>AI Study Planner</h1>
+    <form method="POST">
+        <input type="text" name="topic" placeholder="Enter Topic" required>
+        <input type="number" name="hours" placeholder="Study Hours" required>
+        <button>Generate Plan</button>
+    </form>
+</div>
 
-<form method="POST">
-<input name="subject" placeholder="Subject" required>
-<input name="hours" type="number" placeholder="Hours" required>
-<button type="submit">Generate</button>
-</form>
+{% if plan %}
+<div class="card">
+    <h2>Generated Plan</h2>
+    <pre>{{ plan }}</pre>
+</div>
+{% endif %}
 
-{% for item in plan %}
-<p>{{ item }}</p>
-{% endfor %}
-
-<a href="/dashboard">Back</a>
-
-</body>
-</html>
+{% endblock %}
