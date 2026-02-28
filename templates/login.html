@@ -1,22 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login - AI Study Pal</title>
+    <title>Login | AI Study Pal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
 
-<div class="container">
+<div class="container" style="max-width: 500px; margin: 100px auto;">
+
     <div class="card">
-        <h1>Login</h1>
-        <form method="POST" action="/login">
-            <input type="email" name="email" placeholder="Email" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button>Login</button>
+        <h1 style="margin-bottom: 20px;">Welcome Back</h1>
+
+        <form method="POST" action="{{ url_for('auth.login_post') }}">
+
+            <label>Email</label>
+            <input type="email" name="email" placeholder="Enter your email" required>
+
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Enter your password" required>
+
+            <button type="submit" style="width: 100%; margin-top: 10px;">
+                Login
+            </button>
+
         </form>
-        <br>
-        <a href="/register">Create Account</a>
+
+        <div style="margin-top: 20px; text-align: center;">
+            <p style="color: #9ca3af;">
+                Don't have an account?
+            </p>
+            <a href="{{ url_for('auth.register') }}" style="color: #3b82f6;">
+                Create Account
+            </a>
+        </div>
+
     </div>
+
 </div>
 
 </body>
