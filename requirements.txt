@@ -4,3 +4,4 @@ flask-sqlalchemy
 openai
 youtube-transcript-api
 gunicorn
+werkzeug
