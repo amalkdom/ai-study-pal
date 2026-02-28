@@ -10,7 +10,6 @@ body {
     padding: 15px 40px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
 }
 
 .navbar a {
@@ -26,8 +25,8 @@ body {
 .card {
     background: #1e293b;
     padding: 25px;
-    border-radius: 10px;
-    margin-bottom: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
 }
 
 input, textarea {
@@ -36,15 +35,15 @@ input, textarea {
     margin-bottom: 15px;
     background: #0f172a;
     border: 1px solid #334155;
-    color: white;
     border-radius: 6px;
+    color: white;
 }
 
 button {
     background: #3b82f6;
     border: none;
     padding: 12px 20px;
-    color: white;
     border-radius: 6px;
+    color: white;
     cursor: pointer;
 }
