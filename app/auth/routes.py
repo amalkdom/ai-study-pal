@@ -3,41 +3,40 @@ from flask_login import login_user, logout_user, login_required
 from app.models.user import User
 from app import db
 
-auth = Blueprint(
-    "auth",
-    __name__,
-    template_folder="../templates"
-)
+auth = Blueprint("auth", __name__)
 
 # ---------------- LOGIN PAGE ----------------
-
 @auth.route("/")
 def login():
     return render_template("login.html")
 
 
 # ---------------- REGISTER ----------------
-
 @auth.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
 
-        existing_user = User.query.filter_by(
-            email=request.form["email"]
-        ).first()
+        name = request.form.get("name")
+        age = request.form.get("age")
+        student_class = request.form.get("class")
+        email = request.form.get("email")
+        password = request.form.get("password")
 
+        # Check if email already exists
+        existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            flash("Email already registered.")
-            return redirect(url_for("auth.register"))
+            flash("Email already registered. Please login.")
+            return redirect(url_for("auth.login"))
 
+        # Create new user
         user = User(
-            name=request.form["name"],
-            age=request.form["age"],
-            student_class=request.form["class"],
-            email=request.form["email"]
+            name=name,
+            age=age,
+            student_class=student_class,
+            email=email
         )
 
-        user.set_password(request.form["password"])
+        user.set_password(password)
 
         db.session.add(user)
         db.session.commit()
@@ -49,16 +48,20 @@ def register():
 
 
 # ---------------- LOGIN POST ----------------
-
 @auth.route("/login", methods=["POST"])
 def login_post():
 
-    user = User.query.filter_by(
-        email=request.form["email"]
-    ).first()
+    email = request.form.get("email")
+    password = request.form.get("password")
 
-    if not user or not user.check_password(request.form["password"]):
-        flash("Invalid email or password.")
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        flash("User not found.")
+        return redirect(url_for("auth.login"))
+
+    if not user.check_password(password):
+        flash("Incorrect password.")
         return redirect(url_for("auth.login"))
 
     login_user(user)
@@ -66,10 +69,8 @@ def login_post():
 
 
 # ---------------- LOGOUT ----------------
-
 @auth.route("/logout")
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("auth.login"))
     return redirect(url_for("auth.login"))
