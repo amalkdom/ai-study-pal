@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
+    <title>Login - AI Study Pal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="center">
+<body>
 
-<div class="card">
-    <h2>Login</h2>
-    <form method="POST" action="/login">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button>Login</button>
-    </form>
-    <p>No account? <a href="/register">Register</a></p>
+<div class="container">
+    <div class="card">
+        <h1>Login</h1>
+        <form method="POST" action="/login">
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button>Login</button>
+        </form>
+        <br>
+        <a href="/register">Create Account</a>
+    </div>
 </div>
 
 </body>
