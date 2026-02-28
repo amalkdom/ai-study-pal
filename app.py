@@ -1,19 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from youtube_transcript_api import YouTubeTranscriptApi
 from datetime import datetime
 import openai
 import os
 import json
 
-# -----------------------------
-# CONFIG
-# -----------------------------
-
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'supersecretkey'
+app.config['SECRET_KEY'] = 'change_this_secret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 login_manager = LoginManager()
@@ -22,9 +21,7 @@ login_manager.login_view = "login_page"
 
 openai.api_key = "YOUR_OPENAI_API_KEY"
 
-# -----------------------------
-# DATABASE MODELS
-# -----------------------------
+# ---------------- DATABASE ----------------
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -32,7 +29,7 @@ class User(UserMixin, db.Model):
     age = db.Column(db.Integer)
     student_class = db.Column(db.String(50))
     email = db.Column(db.String(150), unique=True)
-    password = db.Column(db.String(150))
+    password = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class QuizResult(db.Model):
@@ -46,9 +43,7 @@ class QuizResult(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# -----------------------------
-# AUTH
-# -----------------------------
+# ---------------- AUTH ----------------
 
 @app.route('/')
 def login_page():
@@ -57,12 +52,13 @@ def login_page():
 @app.route('/register', methods=["GET","POST"])
 def register():
     if request.method == "POST":
+        hashed_pw = generate_password_hash(request.form["password"])
         user = User(
             name=request.form["name"],
             age=request.form["age"],
             student_class=request.form["class"],
             email=request.form["email"],
-            password=request.form["password"]
+            password=hashed_pw
         )
         db.session.add(user)
         db.session.commit()
@@ -72,7 +68,7 @@ def register():
 @app.route('/login', methods=["POST"])
 def login():
     user = User.query.filter_by(email=request.form["email"]).first()
-    if user and user.password == request.form["password"]:
+    if user and check_password_hash(user.password, request.form["password"]):
         login_user(user)
         return redirect(url_for("dashboard"))
     flash("Invalid credentials")
@@ -84,9 +80,7 @@ def logout():
     logout_user()
     return redirect(url_for("login_page"))
 
-# -----------------------------
-# DASHBOARD
-# -----------------------------
+# ---------------- DASHBOARD ----------------
 
 @app.route('/dashboard')
 @login_required
@@ -95,9 +89,16 @@ def dashboard():
     scores = [r.score for r in results]
     return render_template("dashboard.html", scores=json.dumps(scores))
 
-# -----------------------------
-# AI STUDY PLAN (Pomodoro Style)
-# -----------------------------
+# ---------------- AI FUNCTIONS ----------------
+
+def ask_ai(prompt):
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role":"user","content":prompt}]
+    )
+    return response['choices'][0]['message']['content']
+
+# ---------------- STUDY PLANNER ----------------
 
 @app.route('/planner', methods=["GET","POST"])
 @login_required
@@ -106,52 +107,40 @@ def planner():
     if request.method == "POST":
         topic = request.form["topic"]
         hours = request.form["hours"]
-        prompt = f"Create a structured Pomodoro study plan for {topic} for {hours} hours including breaks."
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role":"user","content":prompt}]
-        )
-        plan = response['choices'][0]['message']['content']
+        prompt = f"Create a professional Pomodoro-based study plan for {topic} for {hours} hours including focused sessions and breaks."
+        plan = ask_ai(prompt)
     return render_template("planner.html", plan=plan)
 
-# -----------------------------
-# AI QUIZ
-# -----------------------------
+# ---------------- QUIZ ----------------
 
 @app.route('/quiz', methods=["GET","POST"])
 @login_required
 def quiz():
     quiz = None
     feedback = None
+
     if request.method == "POST":
         topic = request.form["topic"]
         notes = request.form["notes"]
 
         prompt = f"""
-        Generate 5 MCQ quiz questions with answers from topic: {topic}
-        Use these notes if provided: {notes}
-        Provide correct answers separately.
+        Generate 5 professional MCQ questions with 4 options each and provide correct answers.
+        Topic: {topic}
+        Notes: {notes}
         """
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role":"user","content":prompt}]
-        )
-        quiz = response['choices'][0]['message']['content']
+        quiz = ask_ai(prompt)
 
-        # Fake scoring for demo
-        score = 80
+        score = 85  # placeholder scoring
         result = QuizResult(user_id=current_user.id, topic=topic, score=score)
         db.session.add(result)
         db.session.commit()
 
-        feedback = f"You scored {score}%. Keep improving!"
+        feedback = f"You scored {score}%. Strong performance."
 
     return render_template("quiz.html", quiz=quiz, feedback=feedback)
 
-# -----------------------------
-# AI CHATBOT
-# -----------------------------
+# ---------------- CHATBOT ----------------
 
 @app.route('/chatbot', methods=["GET","POST"])
 @login_required
@@ -159,16 +148,10 @@ def chatbot():
     reply = None
     if request.method == "POST":
         question = request.form["question"]
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role":"user","content":question}]
-        )
-        reply = response['choices'][0]['message']['content']
+        reply = ask_ai(question)
     return render_template("chatbot.html", reply=reply)
 
-# -----------------------------
-# HUGE NOTES SUMMARY
-# -----------------------------
+# ---------------- SUMMARY ----------------
 
 @app.route('/summary', methods=["GET","POST"])
 @login_required
@@ -176,17 +159,11 @@ def summary():
     result = None
     if request.method == "POST":
         text = request.form["text"]
-        prompt = f"Summarize this in structured bullet points:\n{text}"
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role":"user","content":prompt}]
-        )
-        result = response['choices'][0]['message']['content']
+        prompt = f"Summarize this in structured academic format:\n{text}"
+        result = ask_ai(prompt)
     return render_template("summary.html", result=result)
 
-# -----------------------------
-# YOUTUBE SUMMARY
-# -----------------------------
+# ---------------- YOUTUBE ----------------
 
 @app.route('/youtube', methods=["GET","POST"])
 @login_required
@@ -197,19 +174,10 @@ def youtube():
         video_id = link.split("v=")[1]
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
         text = " ".join([x["text"] for x in transcript])
-
-        prompt = f"Summarize this YouTube lecture:\n{text}"
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[{"role":"user","content":prompt}]
-        )
-        summary = response['choices'][0]['message']['content']
-
+        summary = ask_ai(f"Summarize this YouTube lecture:\n{text}")
     return render_template("youtube.html", summary=summary)
 
-# -----------------------------
-# PERFORMANCE GRAPH
-# -----------------------------
+# ---------------- PERFORMANCE ----------------
 
 @app.route('/performance')
 @login_required
@@ -218,7 +186,7 @@ def performance():
     scores = [r.score for r in results]
     return render_template("performance.html", scores=json.dumps(scores))
 
-# -----------------------------
+# ---------------- RUN ----------------
 
 if __name__ == "__main__":
     with app.app_context():
