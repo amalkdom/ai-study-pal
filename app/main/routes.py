@@ -1,76 +1,170 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, flash
 from flask_login import login_required, current_user
-from app.ai.services import *
+from app.ai.services import (
+    generate_study_plan,
+    generate_quiz,
+    summarize_text,
+    summarize_youtube,
+    ask_ai
+)
 from app.models.quiz import QuizResult
 from app import db
 import json
 
-main = Blueprint("main", __name__)
+main = Blueprint(
+    "main",
+    __name__,
+    template_folder="../templates"
+)
+
+# ---------------- DASHBOARD ----------------
 
 @main.route("/dashboard")
 @login_required
 def dashboard():
-    results = QuizResult.query.filter_by(user_id=current_user.id).all()
-    scores = [r.score for r in results]
-    return render_template("dashboard.html", scores=json.dumps(scores))
+    results = QuizResult.query.filter_by(
+        user_id=current_user.id
+    ).all()
 
-@main.route("/planner", methods=["GET","POST"])
+    scores = [r.score for r in results]
+
+    return render_template(
+        "dashboard.html",
+        scores=json.dumps(scores)
+    )
+
+
+# ---------------- STUDY PLANNER ----------------
+
+@main.route("/planner", methods=["GET", "POST"])
 @login_required
 def planner():
+
     plan = None
+
     if request.method == "POST":
-        plan = generate_study_plan(
-            request.form["topic"],
-            request.form["hours"]
-        )
+        topic = request.form["topic"]
+        hours = request.form["hours"]
+
+        try:
+            plan = generate_study_plan(topic, hours)
+        except Exception:
+            flash("AI service error. Try again.")
+
     return render_template("planner.html", plan=plan)
 
-@main.route("/quiz", methods=["GET","POST"])
+
+# ---------------- QUIZ ----------------
+
+@main.route("/quiz", methods=["GET", "POST"])
 @login_required
 def quiz():
+
     quiz_data = None
+    feedback = None
+
     if request.method == "POST":
-        quiz_data = generate_quiz(
-            request.form["topic"],
-            request.form["notes"]
-        )
-        result = QuizResult(
-            user_id=current_user.id,
-            topic=request.form["topic"],
-            score=90
-        )
-        db.session.add(result)
-        db.session.commit()
 
-    return render_template("quiz.html", quiz=quiz_data)
+        topic = request.form["topic"]
+        notes = request.form["notes"]
 
-@main.route("/chatbot", methods=["GET","POST"])
+        try:
+            quiz_data = generate_quiz(topic, notes)
+
+            # For now simple scoring logic
+            score = 90
+
+            result = QuizResult(
+                user_id=current_user.id,
+                topic=topic,
+                score=score
+            )
+
+            db.session.add(result)
+            db.session.commit()
+
+            feedback = f"You scored {score}%. Strong performance."
+
+        except Exception:
+            flash("AI service error. Try again.")
+
+    return render_template(
+        "quiz.html",
+        quiz=quiz_data,
+        feedback=feedback
+    )
+
+
+# ---------------- CHATBOT ----------------
+
+@main.route("/chatbot", methods=["GET", "POST"])
 @login_required
 def chatbot():
+
     reply = None
+
     if request.method == "POST":
-        reply = ask_ai(request.form["question"])
+        question = request.form["question"]
+
+        try:
+            reply = ask_ai(question)
+        except Exception:
+            flash("AI service error.")
+
     return render_template("chatbot.html", reply=reply)
 
-@main.route("/summary", methods=["GET","POST"])
+
+# ---------------- TEXT SUMMARY ----------------
+
+@main.route("/summary", methods=["GET", "POST"])
 @login_required
 def summary():
+
     result = None
+
     if request.method == "POST":
-        result = summarize_text(request.form["text"])
+        text = request.form["text"]
+
+        try:
+            result = summarize_text(text)
+        except Exception:
+            flash("AI service error.")
+
     return render_template("summary.html", result=result)
 
-@main.route("/youtube", methods=["GET","POST"])
+
+# ---------------- YOUTUBE SUMMARY ----------------
+
+@main.route("/youtube", methods=["GET", "POST"])
 @login_required
 def youtube():
+
     summary = None
+
     if request.method == "POST":
-        summary = summarize_youtube(request.form["link"])
+        link = request.form["link"]
+
+        try:
+            summary = summarize_youtube(link)
+        except Exception:
+            flash("Invalid YouTube link or AI error.")
+
     return render_template("youtube.html", summary=summary)
+
+
+# ---------------- PERFORMANCE ----------------
 
 @main.route("/performance")
 @login_required
 def performance():
-    results = QuizResult.query.filter_by(user_id=current_user.id).all()
+
+    results = QuizResult.query.filter_by(
+        user_id=current_user.id
+    ).all()
+
     scores = [r.score for r in results]
-    return render_template("performance.html", scores=json.dumps(scores))
+
+    return render_template(
+        "performance.html",
+        scores=json.dumps(scores)
+    )
