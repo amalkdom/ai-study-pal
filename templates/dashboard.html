@@ -1,232 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>ScholarAI</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+{% extends "base.html" %}
+{% block content %}
 
-<style>
-* {
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+<h1>Dashboard</h1>
 
-body {
-    font-family:'Inter', sans-serif;
-    background:#0f172a;
-    color:#e2e8f0;
-    height:100vh;
-    overflow:hidden;
-}
+<div class="grid">
+    <div class="stat">
+        <h3>Total Quizzes</h3>
+        <p>{{ scores|length }}</p>
+    </div>
 
-.layout {
-    display:flex;
-    height:100vh;
-}
+    <div class="stat">
+        <h3>Average Score</h3>
+        <p>
+        {% if scores|length > 0 %}
+            {{ (scores|sum / scores|length)|round(1) }}%
+        {% else %}
+            0%
+        {% endif %}
+        </p>
+    </div>
 
-/* Sidebar */
-.sidebar {
-    width:220px;
-    background:#111827;
-    padding:30px 20px;
-    border-right:1px solid #1f2937;
-}
-
-.sidebar h2 {
-    font-size:18px;
-    margin-bottom:40px;
-}
-
-.sidebar a {
-    display:block;
-    padding:12px;
-    margin-bottom:8px;
-    color:#9ca3af;
-    text-decoration:none;
-    border-radius:8px;
-    font-size:14px;
-    transition:0.2s;
-}
-
-.sidebar a:hover {
-    background:#1f2937;
-    color:white;
-}
-
-/* Main Chat Area */
-.chat-area {
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    padding:40px;
-}
-
-.chat-header {
-    font-size:20px;
-    margin-bottom:20px;
-}
-
-.chat-box {
-    flex:1;
-    background:#111827;
-    border:1px solid #1f2937;
-    border-radius:12px;
-    padding:20px;
-    overflow-y:auto;
-    margin-bottom:20px;
-}
-
-.message {
-    margin-bottom:15px;
-}
-
-.user {
-    color:#38bdf8;
-}
-
-.ai {
-    color:#a78bfa;
-}
-
-/* Input */
-.input-area {
-    display:flex;
-}
-
-.input-area input {
-    flex:1;
-    padding:12px;
-    border-radius:8px;
-    border:1px solid #1f2937;
-    background:#0f172a;
-    color:white;
-}
-
-.input-area button {
-    margin-left:10px;
-    padding:12px 18px;
-    border-radius:8px;
-    border:none;
-    background:#6366f1;
-    color:white;
-    cursor:pointer;
-}
-
-.input-area button:hover {
-    background:#7c3aed;
-}
-
-/* Analytics Panel */
-.analytics {
-    width:260px;
-    background:#111827;
-    padding:30px 20px;
-    border-left:1px solid #1f2937;
-}
-
-.analytics h3 {
-    font-size:14px;
-    margin-bottom:10px;
-    color:#9ca3af;
-}
-
-.metric {
-    margin-bottom:25px;
-}
-
-.metric-value {
-    font-size:22px;
-    font-weight:600;
-}
-
-.progress-bar {
-    height:6px;
-    background:#1f2937;
-    border-radius:10px;
-    margin-top:8px;
-}
-
-.progress-fill {
-    height:6px;
-    background:#6366f1;
-    border-radius:10px;
-    width:{{ stats.get('xp',0) }}%;
-    transition:width 0.5s ease;
-}
-</style>
-</head>
-
-<body>
-
-<div class="layout">
-
-<!-- Sidebar -->
-<div class="sidebar">
-<h2>ScholarAI</h2>
-<a href="/dashboard">AI Assistant</a>
-<a href="/summarize">Smart Notes</a>
-<a href="/quiz">Quiz Engine</a>
-<a href="/progress">Analytics</a>
-<a href="/logout">Logout</a>
+    <div class="stat">
+        <h3>Status</h3>
+        <p>Active</p>
+    </div>
 </div>
 
-<!-- Chat Area -->
-<div class="chat-area">
-
-<div class="chat-header">
-AI Study Assistant
-</div>
-
-<div class="chat-box" id="chatBox">
-<div class="message ai">AI: Hello {{ user }}, how can I help you study today?</div>
-</div>
-
-<form method="POST" action="/dashboard">
-<div class="input-area">
-<input type="text" name="message" placeholder="Ask anything about your subject...">
-<button type="submit">Send</button>
-</div>
-</form>
-
-</div>
-
-<!-- Analytics -->
-<div class="analytics">
-
-<div class="metric">
-<h3>XP</h3>
-<div class="metric-value">{{ stats.get('xp',0) }}</div>
-<div class="progress-bar">
-<div class="progress-fill"></div>
-</div>
-</div>
-
-<div class="metric">
-<h3>Score</h3>
-<div class="metric-value">{{ stats.get('score',0) }}</div>
-</div>
-
-<div class="metric">
-<h3>Weak Area</h3>
-<div class="metric-value">{{ weak_area }}</div>
-</div>
-
-<div class="metric">
-<h3>Status</h3>
-<div class="metric-value">
-{% if stats.get('xp',0) > 80 %}
-Advanced
-{% elif stats.get('xp',0) > 40 %}
-Intermediate
-{% else %}
-Beginner
-{% endif %}
-</div>
-</div>
-
-</div>
-
-</div>
-
-</body>
-</html>
+{% endblock %}
