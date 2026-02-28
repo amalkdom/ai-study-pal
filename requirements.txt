@@ -1,6 +1,7 @@
 flask
 flask-login
 flask-sqlalchemy
+python-dotenv
 openai
 youtube-transcript-api
 gunicorn
