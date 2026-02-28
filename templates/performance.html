@@ -1,16 +1,35 @@
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<canvas id="chart"></canvas>
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Performance Analytics</h1>
+
+<div class="card">
+    <canvas id="chart"></canvas>
+</div>
+
 <script>
-let data = {{ scores|safe }};
+let scores = {{ scores|safe }};
 new Chart(document.getElementById("chart"), {
     type: 'line',
     data: {
-        labels: data.map((_,i)=>"Quiz "+(i+1)),
+        labels: scores.map((_, i) => "Quiz " + (i+1)),
         datasets: [{
-            label: "Performance",
-            data: data,
-            borderColor: "#3b82f6"
+            label: "Score %",
+            data: scores,
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.2)",
+            tension: 0.3
         }]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
     }
 });
 </script>
+
+{% endblock %}
