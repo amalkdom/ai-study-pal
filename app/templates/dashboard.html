@@ -1,29 +1,25 @@
-{% extends "base.html" %}
-{% block content %}
+@main.route("/dashboard")
+@login_required
+def dashboard():
 
-<h1>Dashboard</h1>
+    results = QuizResult.query.filter_by(
+        user_id=current_user.id
+    ).all()
 
-<div class="grid">
-    <div class="stat">
-        <h3>Total Quizzes</h3>
-        <p>{{ scores|length }}</p>
-    </div>
+    # Convert safely to integers
+    scores = []
+    for r in results:
+        try:
+            scores.append(int(r.score))
+        except:
+            scores.append(0)
 
-    <div class="stat">
-        <h3>Average Score</h3>
-        <p>
-        {% if scores|length > 0 %}
-            {{ (scores|sum / scores|length)|round(1) }}%
-        {% else %}
-            0%
-        {% endif %}
-        </p>
-    </div>
+    average = 0
+    if len(scores) > 0:
+        average = round(sum(scores) / len(scores), 1)
 
-    <div class="stat">
-        <h3>Status</h3>
-        <p>Active</p>
-    </div>
-</div>
-
-{% endblock %}
+    return render_template(
+        "dashboard.html",
+        scores=scores,
+        average=average
+    )
