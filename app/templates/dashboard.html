@@ -2,77 +2,10 @@
 {% block content %}
 
 <div class="container mt-5">
+    <h2>Dashboard</h2>
 
-    <h2 class="mb-4">📊 Performance Dashboard</h2>
-
-    <div class="row">
-
-        <div class="col-md-3">
-            <div class="card shadow p-3 text-center">
-                <h6>Total Quizzes</h6>
-                <h3>{{ total_quizzes }}</h3>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow p-3 text-center">
-                <h6>Average Score</h6>
-                <h3>{{ average }}%</h3>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow p-3 text-center">
-                <h6>Highest Score</h6>
-                <h3>{{ highest }}%</h3>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card shadow p-3 text-center">
-                <h6>Lowest Score</h6>
-                <h3>{{ lowest }}%</h3>
-            </div>
-        </div>
-
-    </div>
-
-    <hr class="my-5">
-
-    <h4>Score History</h4>
-
-    <canvas id="scoreChart" height="100"></canvas>
+    <p>Average Score: {{ average }}%</p>
 
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-    const scores = {{ scores|tojson }};
-
-    const ctx = document.getElementById("scoreChart");
-
-    new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: scores.map((_, index) => "Quiz " + (index + 1)),
-            datasets: [{
-                label: "Score %",
-                data: scores,
-                borderWidth: 2,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100
-                }
-            }
-        }
-    });
-</script>
 
 {% endblock %}
