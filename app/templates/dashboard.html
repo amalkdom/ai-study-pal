@@ -1,25 +1,78 @@
-@main.route("/dashboard")
-@login_required
-def dashboard():
+{% extends "base.html" %}
+{% block content %}
 
-    results = QuizResult.query.filter_by(
-        user_id=current_user.id
-    ).all()
+<div class="container mt-5">
 
-    # Convert safely to integers
-    scores = []
-    for r in results:
-        try:
-            scores.append(int(r.score))
-        except:
-            scores.append(0)
+    <h2 class="mb-4">📊 Performance Dashboard</h2>
 
-    average = 0
-    if len(scores) > 0:
-        average = round(sum(scores) / len(scores), 1)
+    <div class="row">
 
-    return render_template(
-        "dashboard.html",
-        scores=scores,
-        average=average
-    )
+        <div class="col-md-3">
+            <div class="card shadow p-3 text-center">
+                <h6>Total Quizzes</h6>
+                <h3>{{ total_quizzes }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow p-3 text-center">
+                <h6>Average Score</h6>
+                <h3>{{ average }}%</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow p-3 text-center">
+                <h6>Highest Score</h6>
+                <h3>{{ highest }}%</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow p-3 text-center">
+                <h6>Lowest Score</h6>
+                <h3>{{ lowest }}%</h3>
+            </div>
+        </div>
+
+    </div>
+
+    <hr class="my-5">
+
+    <h4>Score History</h4>
+
+    <canvas id="scoreChart" height="100"></canvas>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const scores = {{ scores|tojson }};
+
+    const ctx = document.getElementById("scoreChart");
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: scores.map((_, index) => "Quiz " + (index + 1)),
+            datasets: [{
+                label: "Score %",
+                data: scores,
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}
