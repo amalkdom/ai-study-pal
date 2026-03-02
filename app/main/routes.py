@@ -6,24 +6,19 @@ def dashboard():
         user_id=current_user.id
     ).all()
 
-    scores = [r.score for r in results if isinstance(r.score, int)]
+    scores = []
+    for r in results:
+        try:
+            scores.append(int(r.score))
+        except:
+            scores.append(0)
 
-    total_quizzes = len(scores)
-
-    if total_quizzes > 0:
-        average = round(sum(scores) / total_quizzes, 1)
-        highest = max(scores)
-        lowest = min(scores)
-    else:
-        average = 0
-        highest = 0
-        lowest = 0
+    average = 0
+    if len(scores) > 0:
+        average = round(sum(scores) / len(scores), 1)
 
     return render_template(
         "dashboard.html",
         scores=scores,
-        average=average,
-        total_quizzes=total_quizzes,
-        highest=highest,
-        lowest=lowest
+        average=average
     )
