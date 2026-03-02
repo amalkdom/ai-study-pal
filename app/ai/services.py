@@ -1,15 +1,28 @@
-import openai
+from openai import OpenAI
 from flask import current_app
 from youtube_transcript_api import YouTubeTranscriptApi
 
-def ask_ai(prompt):
-    openai.api_key = current_app.config["OPENAI_API_KEY"]
+def get_client():
+    api_key = current_app.config.get("OPENAI_API_KEY")
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
+    if not api_key:
+        raise Exception("OPENAI_API_KEY not configured")
+
+    return OpenAI(api_key=api_key)
+
+
+def ask_ai(prompt):
+    client = get_client()
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
     )
-    return response["choices"][0]["message"]["content"]
+
+    return response.choices[0].message.content
+
 
 def generate_study_plan(topic, hours):
     prompt = f"""
@@ -17,6 +30,7 @@ def generate_study_plan(topic, hours):
     for {hours} hours including breaks and focus sessions.
     """
     return ask_ai(prompt)
+
 
 def generate_quiz(topic, notes):
     prompt = f"""
@@ -27,11 +41,16 @@ def generate_quiz(topic, notes):
     """
     return ask_ai(prompt)
 
+
 def summarize_text(text):
-    return ask_ai(f"Summarize in structured academic format:\n{text}")
+    prompt = f"Summarize in structured academic format:\n{text}"
+    return ask_ai(prompt)
+
 
 def summarize_youtube(link):
-    video_id = link.split("v=")[1]
+    video_id = link.split("v=")[-1]
     transcript = YouTubeTranscriptApi.get_transcript(video_id)
     text = " ".join([x["text"] for x in transcript])
-    return ask_ai(f"Summarize this lecture:\n{text}")
+
+    prompt = f"Summarize this lecture:\n{text}"
+    return ask_ai(prompt)
