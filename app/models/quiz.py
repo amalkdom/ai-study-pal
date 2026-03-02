@@ -1,9 +1,25 @@
-from app import db
-from datetime import datetime
+@main.route("/dashboard")
+@login_required
+def dashboard():
 
-class QuizResult(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer)
-    topic = db.Column(db.String(200))
-    score = db.Column(db.Integer)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    results = QuizResult.query.filter_by(
+        user_id=current_user.id
+    ).all()
+
+    # Convert safely to integers
+    scores = []
+    for r in results:
+        try:
+            scores.append(int(r.score))
+        except:
+            scores.append(0)
+
+    average = 0
+    if len(scores) > 0:
+        average = round(sum(scores) / len(scores), 1)
+
+    return render_template(
+        "dashboard.html",
+        scores=scores,
+        average=average
+    )
