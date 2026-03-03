@@ -1,7 +1,13 @@
 import os
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "super-secret"
-    SQLALCHEMY_DATABASE_URI = "sqlite:///database.db"
+    SECRET_KEY = os.environ.get("SECRET_KEY", "super-secret")
+
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "DATABASE_URL",
+        "postgresql://postgres:password@localhost:5432/ai_study_pal"
+    )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
