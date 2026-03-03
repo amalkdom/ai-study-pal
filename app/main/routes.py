@@ -1,124 +1,150 @@
 from flask import Blueprint, render_template, request, flash
 from flask_login import login_required, current_user
-from app.ai.services import (
-    generate_study_plan,
-    generate_quiz,
-    summarize_text,
-    summarize_youtube,
-    ask_ai
-)
-from app.models.quiz import QuizResult
+from app.services.ai_engine import ask_ai
+from app.services.analytics_engine import update_topic_performance
+from app.services.evaluation_engine import evaluate_quiz
+from app.models.quiz import Quiz
+from app.models.performance import Performance
+from app.models.ai_history import AIHistory
 from app import db
 import json
+from datetime import datetime
 
-# Blueprint MUST be defined first
-main = Blueprint(
-    "main",
-    __name__,
-    template_folder="../templates"
-)
+main = Blueprint("main", __name__)
+
 
 # ---------------- DASHBOARD ----------------
-
 @main.route("/dashboard")
 @login_required
 def dashboard():
+    quizzes = Quiz.query.filter_by(user_id=current_user.id).all()
+    performances = Performance.query.filter_by(user_id=current_user.id).all()
 
-    results = QuizResult.query.filter_by(
-        user_id=current_user.id
-    ).all()
-
-    scores = []
-    for r in results:
-        try:
-            scores.append(int(r.score))
-        except:
-            scores.append(0)
+    scores = [q.score for q in quizzes]
 
     total_quizzes = len(scores)
+    average_score = round(sum(scores)/total_quizzes, 1) if total_quizzes > 0 else 0
 
-    if total_quizzes > 0:
-        average = round(sum(scores) / total_quizzes, 1)
-        highest = max(scores)
-        lowest = min(scores)
-    else:
-        average = 0
-        highest = 0
-        lowest = 0
+    weak_topics = [
+        p.topic for p in performances if p.average_score < 60
+    ]
 
     return render_template(
         "dashboard.html",
-        scores=scores,
-        average=average,
+        scores=json.dumps(scores),
+        average_score=average_score,
         total_quizzes=total_quizzes,
-        highest=highest,
-        lowest=lowest
+        weak_topics=weak_topics,
+        performances=performances
     )
 
-# ---------------- STUDY PLANNER ----------------
 
+# ---------------- AI STUDY PLANNER ----------------
 @main.route("/planner", methods=["GET", "POST"])
 @login_required
 def planner():
-
     plan = None
 
     if request.method == "POST":
         topic = request.form["topic"]
         hours = request.form["hours"]
 
+        prompt = f"""
+        Create a structured adaptive study plan for {topic}.
+        User past weaknesses: Analyze based on typical student gaps.
+        Duration: {hours} hours.
+        Include revision checkpoints.
+        """
+
         try:
-            plan = generate_study_plan(topic, hours)
+            plan = ask_ai(prompt)
+
+            history = AIHistory(
+                user_id=current_user.id,
+                action_type="study_plan",
+                prompt=prompt,
+                response=plan
+            )
+
+            db.session.add(history)
+            db.session.commit()
+
         except Exception:
-            flash("AI service error. Try again.")
+            flash("AI Service Error")
 
     return render_template("planner.html", plan=plan)
 
-# ---------------- QUIZ ----------------
 
+# ---------------- ADVANCED QUIZ ----------------
 @main.route("/quiz", methods=["GET", "POST"])
 @login_required
 def quiz():
-
     quiz_data = None
     feedback = None
 
     if request.method == "POST":
-
         topic = request.form["topic"]
         notes = request.form["notes"]
 
+        prompt = f"""
+        Generate 5 MCQs for {topic}.
+        Return clear format:
+        Question
+        A)
+        B)
+        C)
+        D)
+        Correct Answer:
+        """
+
         try:
-            quiz_data = generate_quiz(topic, notes)
+            quiz_data = ask_ai(prompt)
 
-            score = 90  # temporary demo score
+            # Simulated scoring logic (replace with real parser later)
+            score = 75
 
-            result = QuizResult(
+            quiz_entry = Quiz(
                 user_id=current_user.id,
                 topic=topic,
-                score=int(score)
+                score=score,
+                weak_area=topic if score < 60 else None
             )
 
-            db.session.add(result)
+            db.session.add(quiz_entry)
             db.session.commit()
 
-            feedback = f"You scored {score}%. Strong performance."
+            update_topic_performance(current_user.id, topic)
+
+            feedback = evaluate_quiz(score)
 
         except Exception:
-            flash("AI service error. Try again.")
+            flash("AI Service Error")
+
+    return render_template("quiz.html", quiz=quiz_data, feedback=feedback)
+
+
+# ---------------- PERFORMANCE ----------------
+@main.route("/performance")
+@login_required
+def performance():
+    performances = Performance.query.filter_by(
+        user_id=current_user.id
+    ).all()
+
+    topics = [p.topic for p in performances]
+    averages = [p.average_score for p in performances]
 
     return render_template(
-        "quiz.html",
-        quiz=quiz_data,
-        feedback=feedback
+        "performance.html",
+        topics=json.dumps(topics),
+        averages=json.dumps(averages)
     )
 
-# ---------------- CHATBOT ----------------
 
+# ---------------- AI CHATBOT ----------------
 @main.route("/chatbot", methods=["GET", "POST"])
 @login_required
 def chatbot():
-
     reply = None
 
     if request.method == "POST":
@@ -126,60 +152,29 @@ def chatbot():
 
         try:
             reply = ask_ai(question)
+
+            history = AIHistory(
+                user_id=current_user.id,
+                action_type="chat",
+                prompt=question,
+                response=reply
+            )
+
+            db.session.add(history)
+            db.session.commit()
+
         except Exception:
-            flash("AI service error.")
+            flash("AI Service Error")
 
     return render_template("chatbot.html", reply=reply)
 
-# ---------------- TEXT SUMMARY ----------------
 
-@main.route("/summary", methods=["GET", "POST"])
+# ---------------- LEARNING TIMELINE ----------------
+@main.route("/timeline")
 @login_required
-def summary():
-
-    result = None
-
-    if request.method == "POST":
-        text = request.form["text"]
-
-        try:
-            result = summarize_text(text)
-        except Exception:
-            flash("AI service error.")
-
-    return render_template("summary.html", result=result)
-
-# ---------------- YOUTUBE SUMMARY ----------------
-
-@main.route("/youtube", methods=["GET", "POST"])
-@login_required
-def youtube():
-
-    summary = None
-
-    if request.method == "POST":
-        link = request.form["link"]
-
-        try:
-            summary = summarize_youtube(link)
-        except Exception:
-            flash("Invalid YouTube link or AI error.")
-
-    return render_template("youtube.html", summary=summary)
-
-# ---------------- PERFORMANCE ----------------
-
-@main.route("/performance")
-@login_required
-def performance():
-
-    results = QuizResult.query.filter_by(
+def timeline():
+    history = AIHistory.query.filter_by(
         user_id=current_user.id
-    ).all()
+    ).order_by(AIHistory.created_at.desc()).all()
 
-    scores = [int(r.score) for r in results]
-
-    return render_template(
-        "performance.html",
-        scores=json.dumps(scores)
-    )
+    return render_template("timeline.html", history=history)
