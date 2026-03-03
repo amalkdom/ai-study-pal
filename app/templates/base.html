@@ -2,27 +2,108 @@
 <html>
 <head>
     <title>AI Study Pal</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background:#0f172a;
+            color:#e2e8f0;
+            display:flex;
+        }
+
+        .sidebar {
+            width:260px;
+            background:#111827;
+            height:100vh;
+            padding:30px 20px;
+            position:fixed;
+        }
+
+        .sidebar h2 {
+            margin-bottom:40px;
+            font-size:20px;
+        }
+
+        .sidebar a {
+            display:block;
+            padding:12px 15px;
+            margin-bottom:10px;
+            color:#9ca3af;
+            text-decoration:none;
+            border-radius:8px;
+            transition:0.2s;
+        }
+
+        .sidebar a:hover {
+            background:#1f2937;
+            color:#3b82f6;
+        }
+
+        .content {
+            margin-left:260px;
+            width:100%;
+            padding:40px;
+        }
+
+        .topbar {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:40px;
+        }
+
+        .profile-badge {
+            background:#1f2937;
+            padding:10px 15px;
+            border-radius:8px;
+            font-size:14px;
+        }
+
+        .grid {
+            display:grid;
+            grid-template-columns: repeat(3,1fr);
+            gap:25px;
+        }
+
+        .card {
+            background:#1f2937;
+            padding:25px;
+            border-radius:16px;
+            border:1px solid #374151;
+        }
+    </style>
 </head>
+
 <body>
 
-<div class="navbar">
+<div class="sidebar">
     <h2>AI Study Pal</h2>
-    <div>
-        <a href="/dashboard">Dashboard</a>
-        <a href="/planner">Planner</a>
-        <a href="/quiz">Quiz</a>
-        <a href="/chatbot">Chat</a>
-        <a href="/summary">Summary</a>
-        <a href="/youtube">YouTube</a>
-        <a href="/performance">Performance</a>
-        <a href="/logout">Logout</a>
-    </div>
+
+    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('main.quiz') }}">Generate Quiz</a>
+    <a href="{{ url_for('main.performance') }}">Performance</a>
+    <a href="{{ url_for('main.planner') }}">Study Planner</a>
+    <a href="{{ url_for('main.chatbot') }}">AI Assistant</a>
+    <a href="{{ url_for('auth.logout') }}">Logout</a>
 </div>
 
-<div class="container">
-    {% block content %}{% endblock %}
+<div class="content">
+
+    <div class="topbar">
+        <div>
+            <h3>Welcome, {{ current_user.name }}</h3>
+        </div>
+        <div class="profile-badge">
+            {{ current_user.role|capitalize }}
+        </div>
+    </div>
+
+    {% block content %}
+    {% endblock %}
+
 </div>
 
 </body>
