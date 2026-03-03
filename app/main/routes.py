@@ -1,48 +1,66 @@
-from flask import Blueprint, render_template, request, flash
+from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from app.services.ai_engine import ask_ai
 from app.services.analytics_engine import update_topic_performance
-from app.services.evaluation_engine import evaluate_quiz
+from app.services.evaluation_engine import evaluate_answers
+from app.services.recommendation_engine import generate_recommendation
 from app.models.quiz import Quiz
 from app.models.performance import Performance
 from app.models.ai_history import AIHistory
+from app.models.question import Question
+from app.models.answer import Answer
 from app import db
+from sqlalchemy import func
 import json
 from datetime import datetime
 
 main = Blueprint("main", __name__)
 
 
-# ---------------- DASHBOARD ----------------
+# ===========================
+# DASHBOARD
+# ===========================
 @main.route("/dashboard")
 @login_required
 def dashboard():
+
     quizzes = Quiz.query.filter_by(user_id=current_user.id).all()
     performances = Performance.query.filter_by(user_id=current_user.id).all()
 
-    scores = [q.score for q in quizzes]
+    scores = [q.score for q in quizzes if q.score is not None]
 
     total_quizzes = len(scores)
     average_score = round(sum(scores)/total_quizzes, 1) if total_quizzes > 0 else 0
 
+    # Predictive analytics (simple trend projection)
+    predicted_score = average_score + 5 if total_quizzes > 0 else 0
+
+    # Weak topic detection
     weak_topics = [
         p.topic for p in performances if p.average_score < 60
     ]
 
+    # Personalized recommendation
+    recommendation = generate_recommendation(current_user.id)
+
     return render_template(
         "dashboard.html",
         scores=json.dumps(scores),
-        average_score=average_score,
         total_quizzes=total_quizzes,
+        average_score=average_score,
+        predicted_score=predicted_score,
         weak_topics=weak_topics,
-        performances=performances
+        recommendation=recommendation
     )
 
 
-# ---------------- AI STUDY PLANNER ----------------
+# ===========================
+# STUDY PLANNER
+# ===========================
 @main.route("/planner", methods=["GET", "POST"])
 @login_required
 def planner():
+
     plan = None
 
     if request.method == "POST":
@@ -50,10 +68,8 @@ def planner():
         hours = request.form["hours"]
 
         prompt = f"""
-        Create a structured adaptive study plan for {topic}.
-        User past weaknesses: Analyze based on typical student gaps.
-        Duration: {hours} hours.
-        Include revision checkpoints.
+        Create a structured adaptive study plan for {topic}
+        for {hours} hours including revision checkpoints.
         """
 
         try:
@@ -70,63 +86,94 @@ def planner():
             db.session.commit()
 
         except Exception:
-            flash("AI Service Error")
+            flash("AI service error.")
 
     return render_template("planner.html", plan=plan)
 
 
-# ---------------- ADVANCED QUIZ ----------------
+# ===========================
+# GENERATE QUIZ
+# ===========================
 @main.route("/quiz", methods=["GET", "POST"])
 @login_required
 def quiz():
-    quiz_data = None
+
+    quiz = None
+    questions = None
     feedback = None
 
     if request.method == "POST":
+
         topic = request.form["topic"]
-        notes = request.form["notes"]
 
         prompt = f"""
-        Generate 5 MCQs for {topic}.
-        Return clear format:
-        Question
-        A)
-        B)
-        C)
-        D)
-        Correct Answer:
+        Generate 5 MCQs in JSON format.
+        Each question must contain:
+        question, option_a, option_b, option_c, option_d, correct_answer.
+        Topic: {topic}
         """
 
         try:
-            quiz_data = ask_ai(prompt)
+            response = ask_ai(prompt)
+            questions_data = json.loads(response)
 
-            # Simulated scoring logic (replace with real parser later)
-            score = 75
-
-            quiz_entry = Quiz(
-                user_id=current_user.id,
-                topic=topic,
-                score=score,
-                weak_area=topic if score < 60 else None
-            )
-
-            db.session.add(quiz_entry)
+            quiz = Quiz(user_id=current_user.id, topic=topic, score=0)
+            db.session.add(quiz)
             db.session.commit()
 
-            update_topic_performance(current_user.id, topic)
+            for q in questions_data:
+                question = Question(
+                    quiz_id=quiz.id,
+                    text=q["question"],
+                    option_a=q["option_a"],
+                    option_b=q["option_b"],
+                    option_c=q["option_c"],
+                    option_d=q["option_d"],
+                    correct_answer=q["correct_answer"]
+                )
+                db.session.add(question)
 
-            feedback = evaluate_quiz(score)
+            db.session.commit()
+
+            questions = Question.query.filter_by(quiz_id=quiz.id).all()
 
         except Exception:
-            flash("AI Service Error")
+            flash("AI service error.")
 
-    return render_template("quiz.html", quiz=quiz_data, feedback=feedback)
+    return render_template(
+        "quiz.html",
+        quiz=quiz,
+        questions=questions,
+        feedback=feedback
+    )
 
 
-# ---------------- PERFORMANCE ----------------
+# ===========================
+# SUBMIT QUIZ
+# ===========================
+@main.route("/submit_quiz/<int:quiz_id>", methods=["POST"])
+@login_required
+def submit_quiz(quiz_id):
+
+    submitted_answers = request.form.to_dict()
+
+    score = evaluate_answers(current_user.id, quiz_id, submitted_answers)
+
+    quiz = Quiz.query.get(quiz_id)
+    update_topic_performance(current_user.id, quiz.topic)
+
+    feedback = f"You scored {score}%."
+
+    return redirect(url_for("main.dashboard"))
+
+
+# ===========================
+# PERFORMANCE PAGE
+# ===========================
 @main.route("/performance")
 @login_required
 def performance():
+
     performances = Performance.query.filter_by(
         user_id=current_user.id
     ).all()
@@ -141,10 +188,13 @@ def performance():
     )
 
 
-# ---------------- AI CHATBOT ----------------
+# ===========================
+# CHATBOT
+# ===========================
 @main.route("/chatbot", methods=["GET", "POST"])
 @login_required
 def chatbot():
+
     reply = None
 
     if request.method == "POST":
@@ -164,15 +214,18 @@ def chatbot():
             db.session.commit()
 
         except Exception:
-            flash("AI Service Error")
+            flash("AI service error.")
 
     return render_template("chatbot.html", reply=reply)
 
 
-# ---------------- LEARNING TIMELINE ----------------
+# ===========================
+# TIMELINE
+# ===========================
 @main.route("/timeline")
 @login_required
 def timeline():
+
     history = AIHistory.query.filter_by(
         user_id=current_user.id
     ).order_by(AIHistory.created_at.desc()).all()
