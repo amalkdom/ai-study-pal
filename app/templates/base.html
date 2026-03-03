@@ -3,76 +3,83 @@
 <head>
     <title>AI Study Pal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background:#0f172a;
+            font-family:'Inter', sans-serif;
+            background:#0b1120;
             color:#e2e8f0;
             display:flex;
         }
 
         .sidebar {
             width:260px;
-            background:#111827;
             height:100vh;
-            padding:30px 20px;
+            background:#0f172a;
+            padding:35px 20px;
+            border-right:1px solid #1e293b;
             position:fixed;
         }
 
-        .sidebar h2 {
-            margin-bottom:40px;
+        .logo {
             font-size:20px;
+            font-weight:700;
+            margin-bottom:50px;
         }
 
         .sidebar a {
             display:block;
             padding:12px 15px;
-            margin-bottom:10px;
-            color:#9ca3af;
+            margin-bottom:12px;
+            color:#94a3b8;
             text-decoration:none;
-            border-radius:8px;
-            transition:0.2s;
+            border-radius:10px;
+            transition:0.25s;
+            font-weight:500;
         }
 
         .sidebar a:hover {
-            background:#1f2937;
-            color:#3b82f6;
+            background:#1e293b;
+            color:#ffffff;
         }
 
-        .content {
+        .main {
             margin-left:260px;
             width:100%;
-            padding:40px;
+            padding:45px;
         }
 
         .topbar {
             display:flex;
             justify-content:space-between;
             align-items:center;
-            margin-bottom:40px;
+            margin-bottom:50px;
         }
 
-        .profile-badge {
-            background:#1f2937;
-            padding:10px 15px;
-            border-radius:8px;
-            font-size:14px;
+        .role-badge {
+            background:#2563eb;
+            padding:6px 14px;
+            border-radius:20px;
+            font-size:12px;
+            font-weight:600;
         }
 
         .grid {
             display:grid;
-            grid-template-columns: repeat(3,1fr);
-            gap:25px;
+            grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+            gap:30px;
         }
 
         .card {
-            background:#1f2937;
-            padding:25px;
-            border-radius:16px;
-            border:1px solid #374151;
+            background:#111827;
+            padding:30px;
+            border-radius:18px;
+            border:1px solid #1f2937;
         }
     </style>
 </head>
@@ -80,29 +87,29 @@
 <body>
 
 <div class="sidebar">
-    <h2>AI Study Pal</h2>
+    <div class="logo">AI Study Pal</div>
 
-    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('main.quiz') }}">Generate Quiz</a>
-    <a href="{{ url_for('main.performance') }}">Performance</a>
-    <a href="{{ url_for('main.planner') }}">Study Planner</a>
-    <a href="{{ url_for('main.chatbot') }}">AI Assistant</a>
-    <a href="{{ url_for('auth.logout') }}">Logout</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/quiz">Generate Quiz</a>
+    <a href="/planner">Study Planner</a>
+    <a href="/performance">Performance</a>
+    <a href="/chatbot">AI Assistant</a>
+    <a href="/timeline">Activity</a>
+    <a href="/logout">Logout</a>
 </div>
 
-<div class="content">
+<div class="main">
 
     <div class="topbar">
         <div>
-            <h3>Welcome, {{ current_user.name }}</h3>
+            <h2>Welcome back, {{ current_user.name }}</h2>
         </div>
-        <div class="profile-badge">
+        <div class="role-badge">
             {{ current_user.role|capitalize }}
         </div>
     </div>
 
-    {% block content %}
-    {% endblock %}
+    {% block content %}{% endblock %}
 
 </div>
 
