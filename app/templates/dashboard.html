@@ -1,11 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container mt-5">
-    <h2>Dashboard</h2>
+<h1>AI Learning Dashboard</h1>
 
-    <p>Average Score: {{ average }}%</p>
-
+<div class="grid">
+    <div class="stat">
+        <h3>Total Quizzes</h3>
+        <p>{{ total_quizzes }}</p>
+    </div>
+    <div class="stat">
+        <h3>Average Score</h3>
+        <p>{{ average_score }}%</p>
+    </div>
 </div>
+
+{% if weak_topics %}
+<div class="card">
+    <h3>Weak Areas Detected</h3>
+    <ul>
+        {% for topic in weak_topics %}
+            <li>{{ topic }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div class="card">
+    <canvas id="scoreChart"></canvas>
+</div>
+
+<script>
+let scores = {{ scores|safe }};
+
+new Chart(document.getElementById("scoreChart"), {
+    type: 'line',
+    data: {
+        labels: scores.map((_, i) => "Quiz " + (i+1)),
+        datasets: [{
+            label: "Score %",
+            data: scores,
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.2)"
+        }]
+    }
+});
+</script>
 
 {% endblock %}
