@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="grid" style="margin-bottom:40px;">
+<div class="grid" style="margin-bottom:50px;">
 
     <div class="card">
-        <h3>Total Quizzes</h3>
+        <h4>Total Learning Sessions</h4>
         <h2 style="margin-top:10px;">{{ total_quizzes }}</h2>
     </div>
 
     <div class="card">
-        <h3>Average Score</h3>
+        <h4>Average Mastery Score</h4>
         <h2 style="margin-top:10px;">{{ average_score }}%</h2>
     </div>
 
     <div class="card">
-        <h3>Predicted Next Score</h3>
+        <h4>Predicted Performance</h4>
         <h2 style="margin-top:10px; color:#22c55e;">
             {{ predicted_score }}%
         </h2>
@@ -22,58 +22,60 @@
 
 </div>
 
-<div class="card" style="margin-bottom:40px;">
-    <h2 style="margin-bottom:20px;">AI Confidence Score</h2>
+<div class="card" style="margin-bottom:50px;">
+    <h3>AI Confidence Index</h3>
 
-    <div style="background:#1f2937; height:15px; border-radius:10px; overflow:hidden;">
+    <div style="background:#1e293b; height:14px; border-radius:10px; margin-top:20px;">
         <div style="
-            width: {{ average_score }}%;
-            background:linear-gradient(90deg,#3b82f6,#22c55e);
+            width: {{ predicted_score }}%;
             height:100%;
+            background:linear-gradient(90deg,#3b82f6,#22c55e);
+            border-radius:10px;
         ">
         </div>
     </div>
 
-    <p style="margin-top:15px; color:#9ca3af;">
-        Your learning consistency index based on recent attempts.
+    <p style="margin-top:15px; color:#94a3b8;">
+        Real-time adaptive confidence metric derived from user performance trends.
     </p>
 </div>
 
-<div class="card" style="margin-bottom:40px;">
-    <h2 style="margin-bottom:20px;">AI Insight</h2>
-    <p>{{ recommendation }}</p>
+<div class="card" style="margin-bottom:50px;">
+    <h3>Performance Trend</h3>
+    <canvas id="trendChart" style="margin-top:20px;"></canvas>
 </div>
 
 <div class="card">
-    <h2 style="margin-bottom:20px;">Performance Trend</h2>
-    <canvas id="trendChart"></canvas>
+    <h3>AI Strategic Insight</h3>
+    <p style="margin-top:15px;">
+        {{ recommendation }}
+    </p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-
 let scores = {{ scores | safe }};
 
 new Chart(document.getElementById("trendChart"), {
     type: 'line',
     data: {
-        labels: scores.map((_, i) => "Quiz " + (i+1)),
+        labels: scores.map((_, i) => "Session " + (i+1)),
         datasets: [{
             data: scores,
             borderColor:"#3b82f6",
-            backgroundColor:"rgba(59,130,246,0.2)",
+            backgroundColor:"rgba(59,130,246,0.15)",
             fill:true,
-            tension:0.4
+            tension:0.4,
+            borderWidth:3
         }]
     },
     options:{
         responsive:true,
+        plugins:{ legend:{ display:false }},
         scales:{
             y:{ beginAtZero:true, max:100 }
         }
     }
 });
-
 </script>
 
 {% endblock %}
