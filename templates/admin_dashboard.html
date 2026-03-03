@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Admin Analytics</h1>
+
+<div class="grid">
+    <div class="stat">
+        <h3>Total Users</h3>
+        <p>{{ total_users }}</p>
+    </div>
+    <div class="stat">
+        <h3>Total Quizzes</h3>
+        <p>{{ total_quizzes }}</p>
+    </div>
+    <div class="stat">
+        <h3>Average Platform Score</h3>
+        <p>{{ avg_score }}%</p>
+    </div>
+    <div class="stat">
+        <h3>Total AI Calls</h3>
+        <p>{{ total_ai_calls }}</p>
+    </div>
+</div>
+
+{% if weakest_topic %}
+<div class="card">
+    <h3>Weakest Global Topic</h3>
+    <p>{{ weakest_topic[0] }}</p>
+</div>
+{% endif %}
+
+{% endblock %}
