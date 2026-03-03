@@ -1,81 +1,108 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container">
+<style>
+.dashboard-wrapper {
+    padding: 40px;
+}
 
-    <!-- ================= HEADER ================= -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
-        <div>
-            <h1 style="font-size:32px; margin-bottom:5px;">AI Learning Intelligence Center</h1>
-            <p style="color:#9ca3af;">
-                Adaptive analytics • Predictive modeling • Performance insights
-            </p>
-        </div>
-    </div>
+.kpi-card {
+    background: linear-gradient(145deg, #1e293b, #0f172a);
+    border-radius: 16px;
+    padding: 25px;
+    border: 1px solid #1f2937;
+    transition: transform 0.3s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-5px);
+}
 
-    <!-- ================= KPI GRID ================= -->
-    <div class="grid" style="margin-bottom:40px;">
+.kpi-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-top: 10px;
+}
 
-        <div class="stat">
-            <h3>Total Quizzes Attempted</h3>
-            <p>{{ total_quizzes }}</p>
-        </div>
+.section-card {
+    background: #111827;
+    border-radius: 18px;
+    padding: 30px;
+    border: 1px solid #1f2937;
+    margin-bottom: 40px;
+}
 
-        <div class="stat">
-            <h3>Current Average Score</h3>
-            <p>{{ average_score }}%</p>
-        </div>
+.glow-box {
+    background: linear-gradient(135deg, #3b82f6, #22c55e);
+    padding: 25px;
+    border-radius: 18px;
+    color: white;
+}
+</style>
 
-        <div class="stat">
-            <h3>Predicted Next Score</h3>
-            <p style="color:#22c55e;">{{ predicted_score }}%</p>
-        </div>
+<div class="dashboard-wrapper">
 
-    </div>
-
-    <!-- ================= PROGRESS BAR ================= -->
-    <div class="card" style="margin-bottom:40px;">
-        <h2 style="margin-bottom:20px;">Performance Progress</h2>
-
-        <div style="background:#111827; border-radius:10px; overflow:hidden;">
-            <div style="
-                width: {{ average_score }}%;
-                background: linear-gradient(90deg,#3b82f6,#22c55e);
-                padding:15px;
-                text-align:right;
-                font-weight:600;
-                transition: width 0.8s ease;
-            ">
-                {{ average_score }}%
-            </div>
-        </div>
-
-        <p style="margin-top:15px; color:#9ca3af;">
-            Based on current learning trajectory, your projected improvement trend is positive.
+    <!-- HEADER -->
+    <div style="margin-bottom:50px;">
+        <h1 style="font-size:34px;">Learning Intelligence Dashboard</h1>
+        <p style="color:#9ca3af;">
+            Adaptive analytics · Predictive performance · AI insights
         </p>
     </div>
 
-    <!-- ================= AI RECOMMENDATION ================= -->
-    <div class="card" style="margin-bottom:40px;">
-        <h2 style="margin-bottom:15px;">Personalized AI Recommendation</h2>
-        <p style="line-height:1.7; font-size:15px; color:#d1d5db;">
+    <!-- KPI GRID -->
+    <div class="grid" style="margin-bottom:50px;">
+
+        <div class="kpi-card">
+            <div style="color:#9ca3af;">Total Quizzes</div>
+            <div class="kpi-value">{{ total_quizzes }}</div>
+        </div>
+
+        <div class="kpi-card">
+            <div style="color:#9ca3af;">Average Score</div>
+            <div class="kpi-value">{{ average_score }}%</div>
+        </div>
+
+        <div class="kpi-card">
+            <div style="color:#9ca3af;">Predicted Next Score</div>
+            <div class="kpi-value" style="color:#22c55e;">
+                {{ predicted_score }}%
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PERFORMANCE RING -->
+    <div class="section-card">
+        <h2 style="margin-bottom:25px;">Overall Performance Index</h2>
+
+        <canvas id="progressRing" width="200" height="200"></canvas>
+
+        <p style="margin-top:20px; color:#9ca3af;">
+            This reflects your current mastery level across attempted topics.
+        </p>
+    </div>
+
+    <!-- SCORE TREND -->
+    <div class="section-card">
+        <h2 style="margin-bottom:25px;">Performance Trend</h2>
+        <canvas id="trendChart"></canvas>
+    </div>
+
+    <!-- AI INSIGHT PANEL -->
+    <div class="glow-box" style="margin-bottom:40px;">
+        <h2 style="margin-bottom:15px;">AI Insight Engine</h2>
+        <p style="line-height:1.7;">
             {{ recommendation }}
         </p>
     </div>
 
-    <!-- ================= PERFORMANCE TREND CHART ================= -->
-    <div class="card" style="margin-bottom:40px;">
-        <h2 style="margin-bottom:20px;">Score Trend Analysis</h2>
-        <canvas id="scoreChart"></canvas>
-    </div>
-
-    <!-- ================= WEAK AREA ALERT ================= -->
+    <!-- WEAK TOPICS -->
     {% if weak_topics %}
-    <div class="card" style="border-left:6px solid #ef4444;">
-        <h2 style="color:#ef4444; margin-bottom:15px;">Attention Required: Weak Topics</h2>
-        <ul style="color:#fca5a5;">
+    <div class="section-card" style="border-left:6px solid #ef4444;">
+        <h2 style="margin-bottom:20px; color:#ef4444;">Focus Required</h2>
+        <ul>
             {% for topic in weak_topics %}
-                <li style="margin-bottom:8px;">{{ topic }}</li>
+                <li style="margin-bottom:10px;">{{ topic }}</li>
             {% endfor %}
         </ul>
     </div>
@@ -83,14 +110,13 @@
 
 </div>
 
-
-<!-- ================= CHART SCRIPT ================= -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 
 let scores = {{ scores | safe }};
 
-new Chart(document.getElementById("scoreChart"), {
+// Line Chart
+new Chart(document.getElementById("trendChart"), {
     type: 'line',
     data: {
         labels: scores.map((_, i) => "Quiz " + (i+1)),
@@ -101,35 +127,34 @@ new Chart(document.getElementById("scoreChart"), {
             backgroundColor: "rgba(59,130,246,0.2)",
             fill: true,
             tension: 0.4,
-            borderWidth: 3,
-            pointRadius: 5,
-            pointBackgroundColor: "#22c55e"
+            borderWidth: 3
         }]
     },
     options: {
         responsive: true,
-        animation: {
-            duration: 1000
-        },
-        plugins: {
-            legend: {
-                labels: {
-                    color: "#e2e8f0",
-                    font: { size: 14 }
-                }
-            }
-        },
         scales: {
-            x: {
-                ticks: { color: "#9ca3af" },
-                grid: { color: "#1f2937" }
-            },
             y: {
                 beginAtZero: true,
-                max: 100,
-                ticks: { color: "#9ca3af" },
-                grid: { color: "#1f2937" }
+                max: 100
             }
+        }
+    }
+});
+
+// Circular Progress Chart
+new Chart(document.getElementById("progressRing"), {
+    type: 'doughnut',
+    data: {
+        datasets: [{
+            data: [{{ average_score }}, 100 - {{ average_score }}],
+            backgroundColor: ["#22c55e", "#1f2937"],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        cutout: "75%",
+        plugins: {
+            legend: { display: false }
         }
     }
 });
