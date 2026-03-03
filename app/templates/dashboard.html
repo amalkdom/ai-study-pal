@@ -1,36 +1,70 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>AI Learning Dashboard</h1>
+<div class="container">
 
-<div class="grid">
-    <div class="stat">
-        <h3>Total Quizzes</h3>
-        <p>{{ total_quizzes }}</p>
+    <!-- ================= HEADER ================= -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <div>
+            <h1 style="margin-bottom:5px;">AI Learning Dashboard</h1>
+            <p style="color:#9ca3af;">Track performance, insights & predictive growth</p>
+        </div>
     </div>
-    <div class="stat">
-        <h3>Average Score</h3>
-        <p>{{ average_score }}%</p>
+
+    <!-- ================= KPI CARDS ================= -->
+    <div class="grid" style="margin-bottom:30px;">
+
+        <div class="stat">
+            <h3>Total Quizzes</h3>
+            <p>{{ total_quizzes }}</p>
+        </div>
+
+        <div class="stat">
+            <h3>Average Score</h3>
+            <p>{{ average_score }}%</p>
+        </div>
+
+        <div class="stat">
+            <h3>Predicted Next Score</h3>
+            <p>{{ predicted_score }}%</p>
+        </div>
+
     </div>
+
+    <!-- ================= AI RECOMMENDATION ================= -->
+    <div class="card" style="margin-bottom:30px;">
+        <h2 style="margin-bottom:15px;">AI Recommendation</h2>
+        <p style="line-height:1.6; color:#d1d5db;">
+            {{ recommendation }}
+        </p>
+    </div>
+
+    <!-- ================= SCORE TREND CHART ================= -->
+    <div class="card" style="margin-bottom:30px;">
+        <h2 style="margin-bottom:20px;">Performance Trend</h2>
+        <canvas id="scoreChart"></canvas>
+    </div>
+
+    <!-- ================= WEAK TOPICS ALERT ================= -->
+    {% if weak_topics %}
+    <div class="card" style="border-left:5px solid #ef4444;">
+        <h2 style="margin-bottom:15px; color:#ef4444;">Weak Areas Detected</h2>
+        <ul>
+            {% for topic in weak_topics %}
+                <li style="margin-bottom:8px;">{{ topic }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
 </div>
 
-{% if weak_topics %}
-<div class="card">
-    <h3>Weak Areas Detected</h3>
-    <ul>
-        {% for topic in weak_topics %}
-            <li>{{ topic }}</li>
-        {% endfor %}
-    </ul>
-</div>
-{% endif %}
 
-<div class="card">
-    <canvas id="scoreChart"></canvas>
-</div>
-
+<!-- ================= CHART SCRIPT ================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-let scores = {{ scores|safe }};
+
+let scores = {{ scores | safe }};
 
 new Chart(document.getElementById("scoreChart"), {
     type: 'line',
@@ -40,10 +74,38 @@ new Chart(document.getElementById("scoreChart"), {
             label: "Score %",
             data: scores,
             borderColor: "#3b82f6",
-            backgroundColor: "rgba(59,130,246,0.2)"
+            backgroundColor: "rgba(59,130,246,0.2)",
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3,
+            pointRadius: 5,
+            pointBackgroundColor: "#3b82f6"
         }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: {
+                    color: "#e2e8f0"
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: "#9ca3af" },
+                grid: { color: "#1f2937" }
+            },
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: { color: "#9ca3af" },
+                grid: { color: "#1f2937" }
+            }
+        }
     }
 });
+
 </script>
 
 {% endblock %}
