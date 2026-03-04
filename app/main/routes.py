@@ -1,17 +1,35 @@
-@main.route("/admin")
+@main.route("/quiz", methods=["GET","POST"])
 @login_required
-def admin_dashboard():
+def quiz():
 
-    from app.models.user import User
+    from app.services.ai_quiz import generate_quiz
+    from app.services.xp_engine import calculate_xp
+    from app.services.level_engine import calculate_level
+    from flask_login import current_user
+    from app import db
 
-    total_users = User.query.count()
+    questions = None
 
-    users = User.query.all()
+    if request.method == "POST":
 
-    avg_score = sum([u.total_score for u in users]) / max(len(users),1)
+        topic = request.form["topic"]
+
+        questions = generate_quiz(topic)
+
+        # Example simulated score
+        score = 80
+
+        xp = calculate_xp(score)
+
+        current_user.xp += xp
+        current_user.total_score += score
+        current_user.total_quizzes += 1
+
+        current_user.level = calculate_level(current_user.xp)
+
+        db.session.commit()
 
     return render_template(
-        "admin.html",
-        total_users=total_users,
-        avg_score=avg_score
+        "quiz.html",
+        questions=questions
     )
