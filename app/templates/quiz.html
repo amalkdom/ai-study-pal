@@ -1,20 +1,48 @@
 {% extends "base.html" %}
+
 {% block content %}
 
-<div class="card">
-    <h1>AI Quiz Generator</h1>
-    <form method="POST">
-        <input type="text" name="topic" placeholder="Topic" required>
-        <textarea name="notes" placeholder="Paste notes (optional)"></textarea>
-        <button>Generate Quiz</button>
-    </form>
-</div>
+<h2>Generate AI Quiz</h2>
 
-{% if quiz %}
-<div class="card">
-    <h2>Generated Quiz</h2>
-    <pre>{{ quiz }}</pre>
-</div>
-{% endif %}
+<form method="POST">
+
+<input
+type="text"
+name="topic"
+placeholder="Enter topic (example: Neural Networks)"
+class="quiz-input"
+required
+>
+
+<button type="submit">Generate Quiz</button>
+
+</form>
+
+<style>
+
+.quiz-input{
+width:100%;
+padding:14px;
+margin-top:15px;
+margin-bottom:15px;
+border-radius:6px;
+border:none;
+font-size:16px;
+}
+
+button{
+padding:12px 20px;
+background:#2563eb;
+border:none;
+border-radius:6px;
+color:white;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+</style>
 
 {% endblock %}
