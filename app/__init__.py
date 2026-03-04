@@ -6,13 +6,13 @@ import os
 db = SQLAlchemy()
 login_manager = LoginManager()
 
-
 def create_app():
 
     app = Flask(__name__)
 
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "secret")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -23,7 +23,7 @@ def create_app():
     app.register_blueprint(main)
     app.register_blueprint(auth)
 
-    # CREATE DATABASE TABLES
+    # create database tables automatically
     with app.app_context():
         db.create_all()
 
