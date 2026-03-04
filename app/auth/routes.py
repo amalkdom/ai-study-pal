@@ -21,20 +21,19 @@ def register():
         email = request.form.get("email")
         password = request.form.get("password")
 
-        # hash password
         hashed_password = generate_password_hash(password)
 
-        new_user = User(
+        user = User(
             name=name,
             email=email,
             password=hashed_password
         )
 
-        db.session.add(new_user)
+        db.session.add(user)
         db.session.commit()
 
-        login_user(new_user)
+        login_user(user)
 
         return redirect(url_for("main.dashboard"))
 
-    return render_template("register.html")
+    return render_template("register.html")register.html")
