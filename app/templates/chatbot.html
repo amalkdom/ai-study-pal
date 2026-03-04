@@ -1,19 +1,30 @@
 {% extends "base.html" %}
+
 {% block content %}
 
-<div class="card">
-    <h1>AI Doubt Solver</h1>
-    <form method="POST">
-        <textarea name="question" placeholder="Ask your doubt..." required></textarea>
-        <button>Ask AI</button>
-    </form>
+<h2>AI Tutor</h2>
+
+<form method="POST">
+
+<input
+type="text"
+name="question"
+placeholder="Ask AI anything about your topic"
+style="width:100%;padding:12px"
+>
+
+<button type="submit">Ask AI</button>
+
+</form>
+
+{% if answer %}
+
+<div style="margin-top:30px;background:#111827;padding:20px">
+
+<p>{{ answer }}</p>
+
 </div>
 
-{% if reply %}
-<div class="card">
-    <h2>Response</h2>
-    <pre>{{ reply }}</pre>
-</div>
 {% endif %}
 
 {% endblock %}
