@@ -1,27 +1,28 @@
-from app import db, login_manager
+from app import db
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
 
 class User(UserMixin, db.Model):
-    __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150))
-    email = db.Column(db.String(150), unique=True)
-    password_hash = db.Column(db.String(255))
+
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(120), unique=True)
+    password = db.Column(db.String(200))
+
+    age = db.Column(db.Integer)
+    class_level = db.Column(db.String(50))
+
     role = db.Column(db.String(20), default="student")
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    quizzes = db.relationship("Quiz", backref="user", lazy=True)
-    performances = db.relationship("Performance", backref="user", lazy=True)
+    # Learning metrics
+    total_score = db.Column(db.Integer, default=0)
+    total_quizzes = db.Column(db.Integer, default=0)
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    # Gamification
+    xp = db.Column(db.Integer, default=0)
+    level = db.Column(db.Integer, default=1)
+    streak_days = db.Column(db.Integer, default=0)
 
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+    # Performance
+    average_score = db.Column(db.Integer, default=0)
+    predicted_score = db.Column(db.Integer, default=0)
