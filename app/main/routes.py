@@ -1,41 +1,17 @@
-from flask import Blueprint, render_template, request
-from flask_login import login_required
-from app.services.ai_quiz import generate_quiz
-
-main = Blueprint("main", __name__)
-
-@main.route("/")
-def landing():
-    return render_template("landing.html")
-
-
-@main.route("/dashboard")
+@main.route("/admin")
 @login_required
-def dashboard():
+def admin_dashboard():
 
-    scores=[65,70,75,80,85]
+    from app.models.user import User
+
+    total_users = User.query.count()
+
+    users = User.query.all()
+
+    avg_score = sum([u.total_score for u in users]) / max(len(users),1)
 
     return render_template(
-        "dashboard.html",
-        scores=scores,
-        total_quizzes=len(scores),
-        average_score=sum(scores)//len(scores)
-    )
-
-
-@main.route("/quiz",methods=["GET","POST"])
-@login_required
-def quiz():
-
-    questions=None
-
-    if request.method=="POST":
-
-        topic=request.form["topic"]
-
-        questions=generate_quiz(topic)
-
-    return render_template(
-        "quiz.html",
-        questions=questions
+        "admin.html",
+        total_users=total_users,
+        avg_score=avg_score
     )
