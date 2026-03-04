@@ -1,3 +1,18 @@
+from flask import Blueprint, render_template, request, redirect, url_for
+from werkzeug.security import generate_password_hash
+from flask_login import login_user
+from app.models.user import User
+from app import db
+
+# CREATE BLUEPRINT FIRST
+auth = Blueprint("auth", __name__)
+
+
+@auth.route("/login")
+def login():
+    return render_template("login.html")
+
+
 @auth.route("/register", methods=["GET", "POST"])
 def register():
 
