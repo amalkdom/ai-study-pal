@@ -1,73 +1,41 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 from flask_login import login_required
-from app.models.user import User
+from app.services.ai_quiz import generate_quiz
 
 main = Blueprint("main", __name__)
 
 @main.route("/")
-def home():
-    return render_template("login.html")
+def landing():
+    return render_template("landing.html")
 
 
 @main.route("/dashboard")
 @login_required
 def dashboard():
 
-    # Example analytics data
-    total_quizzes = 8
-    average_score = 76
-    predicted_score = 82
-    streak_days = 5
-
-    scores = [60, 70, 75, 80, 65, 85, 78, 90]
+    scores=[65,70,75,80,85]
 
     return render_template(
         "dashboard.html",
-        total_quizzes=total_quizzes,
-        average_score=average_score,
-        predicted_score=predicted_score,
-        streak_days=streak_days,
-        scores=scores
+        scores=scores,
+        total_quizzes=len(scores),
+        average_score=sum(scores)//len(scores)
     )
 
 
-@main.route("/quiz")
+@main.route("/quiz",methods=["GET","POST"])
 @login_required
 def quiz():
-    return render_template("quiz.html")
 
+    questions=None
 
-@main.route("/planner")
-@login_required
-def planner():
-    return render_template("planner.html")
+    if request.method=="POST":
 
+        topic=request.form["topic"]
 
-@main.route("/performance")
-@login_required
-def performance():
-    return render_template("performance.html")
-
-
-@main.route("/chatbot")
-@login_required
-def chatbot():
-    return render_template("chatbot.html")
-
-
-@main.route("/timeline")
-@login_required
-def timeline():
-    return render_template("summary.html")
-
-
-@main.route("/leaderboard")
-@login_required
-def leaderboard():
-
-    users = User.query.order_by(User.total_score.desc()).limit(10).all()
+        questions=generate_quiz(topic)
 
     return render_template(
-        "leaderboard.html",
-        users=users
+        "quiz.html",
+        questions=questions
     )
