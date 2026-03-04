@@ -5,6 +5,8 @@ import os
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+login_manager.login_view = "auth.login"
+
 
 def create_app():
 
@@ -17,13 +19,19 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
 
+    from app.models.user import User
+
+    # 🔑 THIS IS THE FIX
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
     from app.main.routes import main
     from app.auth.routes import auth
 
     app.register_blueprint(main)
     app.register_blueprint(auth)
 
-    # create database tables automatically
     with app.app_context():
         db.create_all()
 
