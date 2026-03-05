@@ -4,7 +4,6 @@ from flask_login import login_user
 from app.models.user import User
 from app import db
 
-# IMPORTANT: blueprint must be defined before using @auth.route
 auth = Blueprint("auth", __name__)
 
 
@@ -12,7 +11,6 @@ auth = Blueprint("auth", __name__)
 def register():
 
     if request.method == "POST":
-
         name = request.form.get("name")
         age = request.form.get("age")
         class_level = request.form.get("class_level")
@@ -43,7 +41,6 @@ def register():
 def login():
 
     if request.method == "POST":
-
         email = request.form.get("email")
         password = request.form.get("password")
 
@@ -55,4 +52,4 @@ def login():
 
         return "Invalid email or password"
 
-    return render_template("login.html")ml")
+    return render_template("login.html")
