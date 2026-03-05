@@ -4,7 +4,7 @@ from flask_login import login_user
 from app.models.user import User
 from app import db
 
-# CREATE BLUEPRINT FIRST
+# IMPORTANT: blueprint must be defined before using @auth.route
 auth = Blueprint("auth", __name__)
 
 
@@ -55,4 +55,4 @@ def login():
 
         return "Invalid email or password"
 
-    return render_template("login.html")
+    return render_template("login.html")ml")
